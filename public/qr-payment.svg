@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240" role="img" aria-label="Contoh kod QR pembayaran">
+  <rect width="240" height="240" fill="#ffffff"/>
+  <g fill="#0f172a">
+    <rect x="16" y="16" width="56" height="56"/>
+    <rect x="24" y="24" width="40" height="40" fill="#ffffff"/>
+    <rect x="32" y="32" width="24" height="24"/>
+    <rect x="168" y="16" width="56" height="56"/>
+    <rect x="176" y="24" width="40" height="40" fill="#ffffff"/>
+    <rect x="184" y="32" width="24" height="24"/>
+    <rect x="16" y="168" width="56" height="56"/>
+    <rect x="24" y="176" width="40" height="40" fill="#ffffff"/>
+    <rect x="32" y="184" width="24" height="24"/>
+    <rect x="88" y="24" width="16" height="16"/>
+    <rect x="120" y="24" width="16" height="16"/>
+    <rect x="88" y="56" width="16" height="16"/>
+    <rect x="104" y="72" width="16" height="16"/>
+    <rect x="136" y="56" width="16" height="16"/>
+    <rect x="88" y="104" width="16" height="16"/>
+    <rect x="120" y="104" width="16" height="16"/>
+    <rect x="152" y="104" width="16" height="16"/>
+    <rect x="184" y="104" width="16" height="16"/>
+    <rect x="104" y="136" width="16" height="16"/>
+    <rect x="136" y="136" width="16" height="16"/>
+    <rect x="168" y="136" width="16" height="16"/>
+    <rect x="88" y="168" width="16" height="16"/>
+    <rect x="120" y="168" width="16" height="16"/>
+    <rect x="152" y="168" width="16" height="16"/>
+    <rect x="184" y="168" width="16" height="16"/>
+    <rect x="104" y="200" width="16" height="16"/>
+    <rect x="136" y="200" width="16" height="16"/>
+    <rect x="168" y="200" width="16" height="16"/>
+    <rect x="200" y="200" width="16" height="16"/>
+  </g>
+  <text x="120" y="128" font-family="sans-serif" font-size="13" font-weight="700" fill="#7c3aed" text-anchor="middle">CONTOH</text>
+</svg>

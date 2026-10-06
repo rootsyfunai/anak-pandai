@@ -1,0 +1,72 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Nunito', ui-sans-serif, system-ui, sans-serif;
+
+  --color-brand-50: #f5f3ff;
+  --color-brand-100: #ede9fe;
+  --color-brand-200: #ddd6fe;
+  --color-brand-300: #c4b5fd;
+  --color-brand-400: #a78bfa;
+  --color-brand-500: #8b5cf6;
+  --color-brand-600: #7c3aed;
+  --color-brand-700: #6d28d9;
+  --color-brand-800: #5b21b6;
+  --color-brand-900: #4c1d95;
+
+  --color-correct: #22c55e;
+  --color-wrong: #ef4444;
+  --color-gold: #fbbf24;
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-white text-slate-800 antialiased;
+    font-family: var(--font-sans);
+  }
+
+  button {
+    @apply cursor-pointer;
+  }
+}
+
+@layer components {
+  /* Duolingo-style chunky button with a solid bottom edge that
+     compresses on press. */
+  .btn-3d {
+    @apply relative inline-flex items-center justify-center rounded-2xl px-6 py-3
+           font-extrabold uppercase tracking-wide text-white transition-all
+           active:translate-y-[3px] active:shadow-none disabled:opacity-50;
+    box-shadow: 0 4px 0 0 var(--btn-shadow, rgb(0 0 0 / 0.25));
+  }
+
+  .card-3d {
+    @apply rounded-2xl border-2 border-b-4 border-slate-200 bg-white p-4;
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(5px); }
+}
+
+.animate-shake {
+  animation: shake 0.4s ease-in-out;
+}
+
+@keyframes pop {
+  0% { transform: scale(0.8); opacity: 0; }
+  60% { transform: scale(1.08); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-pop {
+  animation: pop 0.3s ease-out;
+}
