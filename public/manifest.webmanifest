@@ -1,0 +1,48 @@
+{
+  "name": "Anak Pandai — Belajar Sambil Bermain",
+  "short_name": "Anak Pandai",
+  "description": "Permainan pembelajaran untuk anak Malaysia umur 1-12 tahun. Ikut sukatan KSPK dan KSSR.",
+  "lang": "ms-MY",
+  "dir": "ltr",
+  "start_url": "/main",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fdfaf7",
+  "theme_color": "#7c3aed",
+  "categories": ["education", "kids", "games"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Laluan pembelajaran",
+      "short_name": "Belajar",
+      "url": "/main",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Jadi affiliate",
+      "short_name": "Affiliate",
+      "url": "/affiliate",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

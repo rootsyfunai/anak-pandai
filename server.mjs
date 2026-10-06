@@ -46,6 +46,9 @@ const COMPRESSIBLE = /^(text\/|application\/(javascript|json|manifest\+json)|ima
 function cacheControl(pathname) {
   if (IMMUTABLE.test(pathname)) return 'public, max-age=31536000, immutable'
   if (pathname === '/' || pathname.endsWith('.html')) return 'public, max-age=0, must-revalidate'
+  // The service worker must never be served stale, or a fix to the caching
+  // logic itself could take up to a day to reach users.
+  if (pathname === '/sw.js') return 'public, max-age=0, must-revalidate'
   return 'public, max-age=86400'
 }
 
@@ -91,6 +94,10 @@ const server = createServer(async (req, res) => {
     'X-Frame-Options': 'DENY',
     'Referrer-Policy': 'strict-origin-when-cross-origin',
   }
+
+  // The service worker must be allowed to control the whole origin, including
+  // the root scope, or offline navigation would not be intercepted.
+  if (pathname === '/sw.js') headers['Service-Worker-Allowed'] = '/'
 
   // Compress text responses. This cuts egress roughly 3-4x on JS/CSS, which
   // is the bulk of what Railway bills for.

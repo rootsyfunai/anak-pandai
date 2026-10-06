@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ms">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#7c3aed" />
+    <meta name="robots" content="noindex" />
+    <title>Tiada Internet — Anak Pandai</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <style>
+      /* Inlined deliberately: this page must render with no network at all,
+         so it cannot depend on the app's stylesheet or font files. */
+      :root {
+        --brand: #7c3aed;
+        --ink: #2b2118;
+        --ink-soft: #6b5d51;
+        --cream: #fdfaf7;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: var(--cream);
+        color: var(--ink);
+        font-family: 'Nunito', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+        text-align: center;
+      }
+      .card {
+        max-width: 26rem;
+        border: 2px solid #f2e9e0;
+        border-bottom-width: 4px;
+        border-radius: 1rem;
+        background: #fff;
+        padding: 2rem 1.5rem;
+      }
+      .owl {
+        font-size: 4rem;
+        line-height: 1;
+      }
+      h1 {
+        margin: 1rem 0 0.5rem;
+        font-size: 1.5rem;
+        font-weight: 900;
+      }
+      p {
+        margin: 0;
+        color: var(--ink-soft);
+        line-height: 1.6;
+      }
+      button {
+        margin-top: 1.5rem;
+        width: 100%;
+        border: 0;
+        border-radius: 1rem;
+        background: var(--brand);
+        box-shadow: 0 4px 0 0 #5b21b6;
+        color: #fff;
+        cursor: pointer;
+        font: inherit;
+        font-weight: 800;
+        letter-spacing: 0.03em;
+        padding: 0.9rem 1.5rem;
+        text-transform: uppercase;
+      }
+      button:active {
+        transform: translateY(3px);
+        box-shadow: none;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <div class="owl" aria-hidden="true">🦉</div>
+      <h1>Tiada sambungan internet</h1>
+      <p>
+        Anak Pandai perlukan internet untuk memuatkan pelajaran. Sambung semula ke Wi-Fi atau data
+        mudah alih, kemudian cuba lagi.
+      </p>
+      <button type="button" onclick="location.reload()">Cuba lagi</button>
+    </main>
+  </body>
+</html>
