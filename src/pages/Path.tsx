@@ -24,8 +24,8 @@ export default function Path() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="sticky top-0 z-10 border-b-2 border-slate-200 bg-white">
+    <div className="min-h-screen bg-cream-50">
+      <header className="sticky top-0 z-10 border-b-2 border-cream-200 bg-white">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
           <Logo to="/main" />
           <div className="flex items-center gap-2">
@@ -39,16 +39,16 @@ export default function Path() {
         <div className="card-3d mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-extrabold uppercase tracking-wide text-slate-400">
+              <p className="text-xs font-extrabold uppercase tracking-wide text-ink-300">
                 Tahap {level}
               </p>
-              <p className="font-black text-slate-900">{progress.childName}</p>
+              <p className="font-black text-ink-900">{progress.childName}</p>
             </div>
-            <p className="text-sm font-bold text-slate-500">
+            <p className="text-sm font-bold text-ink-300">
               {intoLevel} / {needed} XP
             </p>
           </div>
-          <div className="mt-3 h-3 overflow-hidden rounded-full bg-slate-200">
+          <div className="mt-3 h-3 overflow-hidden rounded-full bg-cream-200">
             <div
               className="h-full rounded-full bg-amber-400 transition-all"
               style={{ width: `${(intoLevel / needed) * 100}%` }}
@@ -57,7 +57,7 @@ export default function Path() {
         </div>
 
         <section className="mb-5">
-          <h2 className="mb-2 text-sm font-extrabold uppercase tracking-wide text-slate-400">
+          <h2 className="mb-2 text-sm font-extrabold uppercase tracking-wide text-ink-300">
             Peringkat umur
           </h2>
           <div className="flex gap-2 overflow-x-auto pb-1">
@@ -68,18 +68,18 @@ export default function Path() {
                 className={`shrink-0 rounded-full px-4 py-2 text-sm font-extrabold transition-colors ${
                   band === id
                     ? 'bg-brand-600 text-white'
-                    : 'bg-white text-slate-600 hover:bg-slate-100'
+                    : 'bg-white text-ink-500 hover:bg-cream-100'
                 }`}
               >
                 {AGE_BANDS[id].label}
               </button>
             ))}
           </div>
-          <p className="mt-2 text-xs font-semibold text-slate-500">{bandMeta.framework}</p>
+          <p className="mt-2 text-xs font-semibold text-ink-300">{bandMeta.framework}</p>
         </section>
 
         <section className="mb-6">
-          <h2 className="mb-2 text-sm font-extrabold uppercase tracking-wide text-slate-400">
+          <h2 className="mb-2 text-sm font-extrabold uppercase tracking-wide text-ink-300">
             Subjek
           </h2>
           <div className="flex flex-wrap gap-2">
@@ -90,7 +90,7 @@ export default function Path() {
                 className={`rounded-2xl border-2 border-b-4 px-4 py-2 text-sm font-extrabold transition-all ${
                   subject === id
                     ? 'border-brand-400 bg-brand-50 text-brand-700'
-                    : 'border-slate-200 bg-white text-slate-600'
+                    : 'border-cream-200 bg-white text-ink-500'
                 }`}
               >
                 {SUBJECTS[id].emoji} {SUBJECTS[id].name}
@@ -100,16 +100,16 @@ export default function Path() {
         </section>
 
         <section>
-          <h2 className="mb-4 text-sm font-extrabold uppercase tracking-wide text-slate-400">
+          <h2 className="mb-4 text-sm font-extrabold uppercase tracking-wide text-ink-300">
             Laluan pembelajaran
           </h2>
           {lessons.length === 0 ? (
-            <p className="card-3d text-center font-bold text-slate-500">
+            <p className="card-3d text-center font-bold text-ink-300">
               Kandungan untuk subjek ini sedang disediakan.
             </p>
           ) : (
             <ol className="relative space-y-4 pl-6">
-              <span className="absolute left-[11px] top-2 bottom-2 w-1 rounded bg-slate-200" />
+              <span className="absolute left-[11px] top-2 bottom-2 w-1 rounded bg-cream-200" />
               {lessons.map((lesson, i) => {
                 const done = progress.completedLessons.includes(lesson.id)
                 const locked = i > 0 && !progress.completedLessons.includes(lessons[i - 1].id)
@@ -120,7 +120,7 @@ export default function Path() {
                         done
                           ? 'bg-green-500 text-white'
                           : locked
-                            ? 'bg-slate-300 text-white'
+                            ? 'bg-ink-300 text-white'
                             : 'bg-brand-600 text-white'
                       }`}
                     >
@@ -129,8 +129,8 @@ export default function Path() {
                     <div className={`card-3d ${locked ? 'opacity-60' : ''}`}>
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="font-black text-slate-900">{lesson.title}</p>
-                          <p className="text-sm text-slate-500">{lesson.objective}</p>
+                          <p className="font-black text-ink-900">{lesson.title}</p>
+                          <p className="text-sm text-ink-300">{lesson.objective}</p>
                           {lesson.standard && (
                             <p className="mt-1 text-xs font-bold text-brand-500">
                               {lesson.standard}

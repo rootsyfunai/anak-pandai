@@ -100,7 +100,7 @@ export default function Play() {
   return (
     <div className="flex min-h-screen flex-col bg-white">
       <header className="mx-auto flex w-full max-w-2xl items-center gap-4 px-4 py-4">
-        <Link to="/main" className="text-2xl text-slate-400 hover:text-slate-600" aria-label="Keluar">
+        <Link to="/main" className="text-2xl text-ink-300 hover:text-ink-500" aria-label="Keluar">
           ✕
         </Link>
         <div className="flex-1">
@@ -110,7 +110,7 @@ export default function Play() {
       </header>
 
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 pb-40">
-        <h1 className="text-center text-2xl font-black text-slate-900">{question.prompt}</h1>
+        <h1 className="text-center text-2xl font-black text-ink-900">{question.prompt}</h1>
 
         {question.kind === 'listen' && (
           <>
@@ -202,7 +202,7 @@ interface TileProps {
 }
 
 function OptionTile({ label, selected, revealed, isAnswer, shake, onClick }: TileProps) {
-  let tone = 'border-slate-200 bg-white hover:bg-slate-50'
+  let tone = 'border-cream-200 bg-white hover:bg-cream-50'
   if (revealed && isAnswer) tone = 'border-green-400 bg-green-100'
   else if (revealed && selected) tone = 'border-red-400 bg-red-100'
   else if (selected) tone = 'border-brand-400 bg-brand-50'
@@ -262,7 +262,7 @@ function MatchBoard({
                 ? 'border-green-400 bg-green-100 opacity-60'
                 : pickedLeft === p.left
                   ? 'border-brand-400 bg-brand-50'
-                  : 'border-slate-200 bg-white'
+                  : 'border-cream-200 bg-white'
             }`}
           >
             {p.left}
@@ -281,7 +281,7 @@ function MatchBoard({
               className={`w-full rounded-2xl border-2 border-b-4 p-4 font-extrabold transition-all ${
                 isMatched
                   ? 'border-green-400 bg-green-100 opacity-60'
-                  : 'border-slate-200 bg-white'
+                  : 'border-cream-200 bg-white'
               }`}
             >
               {right}
@@ -308,10 +308,10 @@ function Summary({
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-gradient-to-b from-amber-50 to-white p-6 text-center">
       <span className="animate-pop text-7xl">{state.failed ? '💪' : '🎉'}</span>
-      <h1 className="text-3xl font-black text-slate-900">
+      <h1 className="text-3xl font-black text-ink-900">
         {state.failed ? 'Cuba lagi!' : 'Syabas!'}
       </h1>
-      <p className="font-bold text-slate-500">{lesson.title}</p>
+      <p className="font-bold text-ink-300">{lesson.title}</p>
 
       <div className="flex gap-2 text-4xl">
         {[0, 1, 2].map((i) => (
@@ -337,8 +337,8 @@ function Summary({
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="card-3d">
-      <p className="text-xs font-extrabold uppercase tracking-wide text-slate-400">{label}</p>
-      <p className="text-xl font-black text-slate-900">{value}</p>
+      <p className="text-xs font-extrabold uppercase tracking-wide text-ink-300">{label}</p>
+      <p className="text-xl font-black text-ink-900">{value}</p>
     </div>
   )
 }

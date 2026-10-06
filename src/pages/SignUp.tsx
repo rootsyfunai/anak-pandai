@@ -38,18 +38,18 @@ export default function SignUp() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-brand-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-50">
       <header className="mx-auto flex max-w-md items-center justify-between px-4 py-5">
         <Logo />
-        <Link to="/" className="font-bold text-slate-500 hover:text-brand-700">
+        <Link to="/" className="font-bold text-ink-300 hover:text-brand-700">
           Kembali
         </Link>
       </header>
 
       <main className="mx-auto max-w-md px-4 pb-16">
         <div className="card-3d">
-          <h1 className="text-2xl font-black text-slate-900">Daftar akaun</h1>
-          <p className="mt-1 text-sm text-slate-600">
+          <h1 className="text-2xl font-black text-ink-900">Daftar akaun</h1>
+          <p className="mt-1 text-sm text-ink-500">
             Satu akaun untuk semua anak anda. Bayaran sekali sahaja.
           </p>
 
@@ -71,7 +71,7 @@ export default function SignUp() {
             </Button>
           </form>
 
-          <p className="mt-4 text-center text-sm text-slate-500">
+          <p className="mt-4 text-center text-sm text-ink-300">
             Sudah ada akaun?{' '}
             <Link to="/masuk" className="font-bold text-brand-600">
               Masuk
@@ -98,13 +98,13 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="text-sm font-extrabold text-slate-700">{label}</span>
+      <span className="text-sm font-extrabold text-ink-700">{label}</span>
       <input
         type={type}
         value={value}
         required={required}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-1 w-full rounded-xl border-2 border-slate-200 px-4 py-3 outline-none focus:border-brand-400"
+        className="mt-1 w-full rounded-xl border-2 border-cream-200 px-4 py-3 outline-none focus:border-brand-400"
       />
     </label>
   )

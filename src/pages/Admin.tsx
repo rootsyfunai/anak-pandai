@@ -85,11 +85,11 @@ export default function Admin() {
     .reduce((sum, o) => sum + o.amount_myr * 0.5, 0)
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="border-b-2 border-slate-200 bg-white">
+    <div className="min-h-screen bg-cream-50">
+      <header className="border-b-2 border-cream-200 bg-white">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-4">
           <Logo />
-          <span className="rounded-full bg-slate-900 px-3 py-1 text-sm font-extrabold text-white">
+          <span className="rounded-full bg-ink-900 px-3 py-1 text-sm font-extrabold text-white">
             Admin
           </span>
         </div>
@@ -114,19 +114,19 @@ export default function Admin() {
           </p>
         )}
 
-        <h2 className="mb-3 font-black text-slate-900">Pesanan</h2>
+        <h2 className="mb-3 font-black text-ink-900">Pesanan</h2>
         {loading ? (
-          <p className="font-bold text-slate-500">Memuatkan…</p>
+          <p className="font-bold text-ink-300">Memuatkan…</p>
         ) : orders.length === 0 ? (
-          <p className="card-3d text-center font-bold text-slate-500">Tiada pesanan lagi.</p>
+          <p className="card-3d text-center font-bold text-ink-300">Tiada pesanan lagi.</p>
         ) : (
           <ul className="space-y-3">
             {orders.map((o) => (
               <li key={o.id} className="card-3d">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="font-black text-slate-900">{formatMYR(o.amount_myr)}</p>
-                    <p className="text-sm text-slate-500">
+                    <p className="font-black text-ink-900">{formatMYR(o.amount_myr)}</p>
+                    <p className="text-sm text-ink-300">
                       {new Date(o.created_at).toLocaleString('ms-MY')}
                     </p>
                     {o.affiliate_code && (
@@ -135,10 +135,10 @@ export default function Admin() {
                       </p>
                     )}
                     {o.reference_note && (
-                      <p className="mt-1 text-sm text-slate-600">Nota: {o.reference_note}</p>
+                      <p className="mt-1 text-sm text-ink-500">Nota: {o.reference_note}</p>
                     )}
                     {o.proof_path && (
-                      <p className="mt-1 text-xs text-slate-400">Resit: {o.proof_path}</p>
+                      <p className="mt-1 text-xs text-ink-300">Resit: {o.proof_path}</p>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
@@ -181,8 +181,8 @@ export default function Admin() {
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="card-3d">
-      <p className="text-xs font-extrabold uppercase tracking-wide text-slate-400">{label}</p>
-      <p className="text-2xl font-black text-slate-900">{value}</p>
+      <p className="text-xs font-extrabold uppercase tracking-wide text-ink-300">{label}</p>
+      <p className="text-2xl font-black text-ink-900">{value}</p>
     </div>
   )
 }

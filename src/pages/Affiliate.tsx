@@ -24,18 +24,18 @@ export default function Affiliate() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-brand-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-50">
       <header className="mx-auto flex max-w-3xl items-center justify-between px-4 py-5">
         <Logo />
-        <Link to="/" className="font-bold text-slate-500 hover:text-brand-700">
+        <Link to="/" className="font-bold text-ink-300 hover:text-brand-700">
           Kembali
         </Link>
       </header>
 
       <main className="mx-auto max-w-3xl px-4 pb-16">
         <div className="text-center">
-          <h1 className="text-4xl font-black text-slate-900">Jadi Affiliate Anak Pandai</h1>
-          <p className="mx-auto mt-3 max-w-xl text-slate-600">
+          <h1 className="text-4xl font-black text-ink-900">Jadi Affiliate Anak Pandai</h1>
+          <p className="mx-auto mt-3 max-w-xl text-ink-500">
             Kongsi pautan anda dengan ibu bapa lain. Setiap kali mereka beli, anda dapat{' '}
             <strong>{formatMYR(COMMISSION_MYR)}</strong> — itu 50% daripada harga{' '}
             {formatMYR(PRICE_MYR)}.
@@ -50,15 +50,15 @@ export default function Affiliate() {
           ].map((s) => (
             <div key={s.title} className="card-3d text-center">
               <span className="text-3xl">{s.emoji}</span>
-              <p className="mt-2 font-black text-slate-900">{s.title}</p>
-              <p className="text-sm text-slate-600">{s.body}</p>
+              <p className="mt-2 font-black text-ink-900">{s.title}</p>
+              <p className="text-sm text-ink-500">{s.body}</p>
             </div>
           ))}
         </div>
 
         <div className="card-3d mt-8">
-          <h2 className="font-black text-slate-900">Cuba pautan anda</h2>
-          <p className="mt-1 text-sm text-slate-600">
+          <h2 className="font-black text-ink-900">Cuba pautan anda</h2>
+          <p className="mt-1 text-sm text-ink-500">
             Masukkan kod pilihan anda untuk lihat pautan yang akan dikongsi.
           </p>
           <div className="mt-3 flex gap-2">
@@ -66,7 +66,7 @@ export default function Affiliate() {
               value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase())}
               placeholder="Contoh: ALI2026"
-              className="flex-1 rounded-xl border-2 border-slate-200 px-4 py-3 font-bold uppercase outline-none focus:border-brand-400"
+              className="flex-1 rounded-xl border-2 border-cream-200 px-4 py-3 font-bold uppercase outline-none focus:border-brand-400"
             />
             <Button onClick={copy} disabled={!valid}>
               {copied ? 'Disalin ✓' : 'Salin'}
@@ -78,33 +78,33 @@ export default function Affiliate() {
             </p>
           )}
           {valid && (
-            <p className="mt-3 break-all rounded-xl bg-slate-100 px-3 py-2 font-mono text-sm text-slate-700">
+            <p className="mt-3 break-all rounded-xl bg-cream-100 px-3 py-2 font-mono text-sm text-ink-700">
               {link}
             </p>
           )}
         </div>
 
         <div className="card-3d mt-6">
-          <h2 className="font-black text-slate-900">Cara komisen dikira</h2>
+          <h2 className="font-black text-ink-900">Cara komisen dikira</h2>
           <table className="mt-3 w-full text-sm">
             <tbody>
-              <tr className="border-b border-slate-100">
-                <td className="py-2 text-slate-600">Harga jualan</td>
+              <tr className="border-b border-cream-100">
+                <td className="py-2 text-ink-500">Harga jualan</td>
                 <td className="py-2 text-right font-bold">{formatMYR(PRICE_MYR)}</td>
               </tr>
-              <tr className="border-b border-slate-100">
-                <td className="py-2 text-slate-600">Kadar komisen</td>
+              <tr className="border-b border-cream-100">
+                <td className="py-2 text-ink-500">Kadar komisen</td>
                 <td className="py-2 text-right font-bold">50%</td>
               </tr>
               <tr>
-                <td className="py-2 font-black text-slate-900">Anda dapat</td>
+                <td className="py-2 font-black text-ink-900">Anda dapat</td>
                 <td className="py-2 text-right font-black text-green-600">
                   {formatMYR(COMMISSION_MYR)}
                 </td>
               </tr>
             </tbody>
           </table>
-          <p className="mt-3 text-xs text-slate-500">
+          <p className="mt-3 text-xs text-ink-300">
             Kod affiliate dijejak secara automatik melalui pautan — pembeli tidak perlu taip apa-apa.
           </p>
         </div>

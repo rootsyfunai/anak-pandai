@@ -15,7 +15,7 @@ export function Hearts({ hearts }: { hearts: number }) {
 export function ProgressBar({ value, max }: { value: number; max: number }) {
   const pct = max === 0 ? 0 : Math.min(100, (value / max) * 100)
   return (
-    <div className="h-4 w-full overflow-hidden rounded-full bg-slate-200">
+    <div className="h-4 w-full overflow-hidden rounded-full bg-cream-200">
       <div
         className="h-full rounded-full bg-green-500 transition-all duration-300"
         style={{ width: `${pct}%` }}

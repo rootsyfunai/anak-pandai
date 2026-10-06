@@ -88,10 +88,10 @@ export default function Checkout() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-cream-50">
       <header className="mx-auto flex max-w-2xl items-center justify-between px-4 py-5">
         <Logo />
-        <Link to="/" className="font-bold text-slate-500 hover:text-brand-700">
+        <Link to="/" className="font-bold text-ink-300 hover:text-brand-700">
           Kembali
         </Link>
       </header>
@@ -100,8 +100,8 @@ export default function Checkout() {
         {step === 'done' ? (
           <div className="card-3d text-center">
             <span className="text-6xl">⏳</span>
-            <h1 className="mt-4 text-2xl font-black text-slate-900">Pembayaran dihantar</h1>
-            <p className="mt-2 text-slate-600">
+            <h1 className="mt-4 text-2xl font-black text-ink-900">Pembayaran dihantar</h1>
+            <p className="mt-2 text-ink-500">
               Kami akan semak resit anda dalam masa 24 jam. Anda akan dapat akses penuh sebaik
               sahaja diluluskan.
             </p>
@@ -114,10 +114,10 @@ export default function Checkout() {
             <div className="card-3d mb-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-extrabold uppercase tracking-wide text-slate-400">
+                  <p className="text-xs font-extrabold uppercase tracking-wide text-ink-300">
                     Jumlah bayaran
                   </p>
-                  <p className="text-3xl font-black text-slate-900">{formatMYR(PRICE_MYR)}</p>
+                  <p className="text-3xl font-black text-ink-900">{formatMYR(PRICE_MYR)}</p>
                 </div>
                 <span className="rounded-full bg-green-100 px-3 py-1 text-sm font-extrabold text-green-700">
                   Sekali sahaja
@@ -131,20 +131,20 @@ export default function Checkout() {
             </div>
 
             <div className="card-3d mb-5">
-              <h2 className="font-black text-slate-900">1. Bayar dengan {PAYMENT.method}</h2>
+              <h2 className="font-black text-ink-900">1. Bayar dengan {PAYMENT.method}</h2>
               <div className="mt-4 flex justify-center">
                 <img
                   src={PAYMENT.qrImagePath}
                   alt="Kod QR pembayaran"
-                  className="h-56 w-56 rounded-2xl border-2 border-slate-200 bg-white object-contain p-2"
+                  className="h-56 w-56 rounded-2xl border-2 border-cream-200 bg-white object-contain p-2"
                 />
               </div>
-              <p className="mt-3 text-center font-bold text-slate-700">
+              <p className="mt-3 text-center font-bold text-ink-700">
                 {PAYMENT.payee} · {formatMYR(PRICE_MYR)}
               </p>
               <ol className="mt-4 space-y-2">
                 {PAYMENT.instructions.map((line, i) => (
-                  <li key={line} className="flex gap-2 text-sm text-slate-600">
+                  <li key={line} className="flex gap-2 text-sm text-ink-500">
                     <span className="font-black text-brand-600">{i + 1}.</span>
                     <span>{line}</span>
                   </li>
@@ -153,12 +153,12 @@ export default function Checkout() {
             </div>
 
             <div className="card-3d">
-              <h2 className="font-black text-slate-900">2. Muat naik resit</h2>
+              <h2 className="font-black text-ink-900">2. Muat naik resit</h2>
               <input
                 type="file"
                 accept="image/*"
                 onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                className="mt-3 w-full rounded-xl border-2 border-dashed border-slate-300 p-4 text-sm"
+                className="mt-3 w-full rounded-xl border-2 border-dashed border-cream-200 p-4 text-sm"
               />
               {file && (
                 <p className="mt-2 text-sm font-bold text-green-600">Dipilih: {file.name}</p>
@@ -168,7 +168,7 @@ export default function Checkout() {
                 onChange={(e) => setNote(e.target.value)}
                 placeholder="Nota (pilihan) — contoh: nama anak, masa bayar"
                 rows={3}
-                className="mt-3 w-full rounded-xl border-2 border-slate-200 p-3 text-sm outline-none focus:border-brand-400"
+                className="mt-3 w-full rounded-xl border-2 border-cream-200 p-3 text-sm outline-none focus:border-brand-400"
               />
               {error && <p className="mt-3 text-sm font-bold text-red-600">{error}</p>}
               <Button onClick={submit} disabled={busy} className="mt-4 w-full py-4">
