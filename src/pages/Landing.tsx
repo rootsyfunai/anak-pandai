@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '../components/Button'
+import { CdnImage } from '../components/CdnImage'
 import { Logo } from '../components/Logo'
 import { AGE_BANDS, AGE_BAND_ORDER, SUBJECTS } from '../data/curriculum'
 import { LESSONS } from '../data/lessons'
@@ -41,6 +42,57 @@ const FEATURES = [  {
 
 const CURRENT_YEAR = new Date().getFullYear()
 
+/**
+ * Parent testimonials. These are illustrative placeholders — replace with
+ * real quotes and real photos (on the CDN) before launch. Fabricated social
+ * proof is both an integrity problem and, under Malaysian consumer
+ * protection law, a misrepresentation risk.
+ */
+const TESTIMONIALS = [
+  {
+    quote:
+      'Anak saya umur 5 tahun boleh main sendiri tanpa saya perlu duduk sebelah. Latihan pendek, jadi dia tak rasa terbeban.',
+    name: 'Puan Nurul Aina',
+    location: 'Shah Alam, Selangor',
+    photo: 'testimonials/nurul-aina.jpg',
+    highlight: 'Anak main sendiri',
+  },
+  {
+    quote:
+      'Saya suka susunan subjek ikut KSPK dan KSSR. Bila cikgu sebut topik di sekolah, anak saya sudah pernah jumpa di app.',
+    name: 'Encik Faizal Rahman',
+    location: 'Johor Bahru, Johor',
+    photo: 'testimonials/faizal-rahman.jpg',
+    highlight: 'Ikut sukatan sekolah',
+  },
+  {
+    quote:
+      'Laporan kemajuan sangat membantu. Saya nampak subjek mana anak perlu lebih latihan, jadi boleh fokus di situ.',
+    name: 'Puan Kavitha Subramaniam',
+    location: 'Ipoh, Perak',
+    photo: 'testimonials/kavitha.jpg',
+    highlight: 'Nampak kemajuan',
+  },
+]
+
+const STEPS = [
+  {
+    emoji: '📝',
+    title: 'Daftar akaun',
+    body: 'Isi nama dan e-mel. Ambil masa kurang seminit.',
+  },
+  {
+    emoji: '💳',
+    title: 'Bayar RM50 sekali',
+    body: 'Imbas DuitNow QR. Tiada langganan, tiada bayaran berulang.',
+  },
+  {
+    emoji: '🚀',
+    title: 'Anak terus belajar',
+    body: 'Tambah profil anak, pilih umur, dan mula pengembaraan pertama.',
+  },
+]
+
 export default function Landing() {
   const [ref, setRef] = useState<CapturedRef | null>(null)
   const lessonCount = LESSONS.length
@@ -78,12 +130,22 @@ export default function Landing() {
       )}
 
       <section className="relative overflow-hidden">
-        {/* Soft brand glow behind the hero. Pure CSS, so it costs no bytes
-            and no extra request. */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 -top-40 h-96 bg-[radial-gradient(60%_60%_at_50%_50%,var(--color-brand-200),transparent_70%)] opacity-70"
-        />
+        {/* Full-bleed hero photo with a brand-tinted scrim, so the headline
+            stays readable over any image. The photo comes from the CDN; when
+            no CDN is configured the gradient alone carries the section. */}
+        <div aria-hidden className="absolute inset-0">
+          <CdnImage
+            path="hero/keluarga-belajar.jpg"
+            alt=""
+            priority
+            className="h-full w-full object-cover"
+            fallback={
+              <div className="h-full w-full bg-[radial-gradient(80%_70%_at_50%_0%,var(--color-brand-200),transparent_70%)]" />
+            }
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-cream-50/95 via-cream-50/85 to-cream-50" />
+        </div>
+
         <div className="relative mx-auto max-w-5xl px-4 pt-12 pb-16 text-center">
           <span className="inline-block rounded-full border-2 border-brand-200 bg-white px-4 py-1 text-sm font-extrabold text-brand-700">
             Untuk anak Malaysia · 1-12 tahun
@@ -113,6 +175,20 @@ export default function Landing() {
           <p className="mt-3 text-sm font-semibold text-ink-300">
             Bayaran sekali sahaja · Akses seumur hidup · Tiada langganan
           </p>
+
+          {/* Trust strip. Parents scan for these before they read anything
+              else, so they sit directly under the primary CTA. */}
+          <ul className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-bold text-ink-500">
+            <li className="flex items-center gap-1.5">
+              <span className="text-green-500">✓</span> Tiada iklan
+            </li>
+            <li className="flex items-center gap-1.5">
+              <span className="text-green-500">✓</span> Boleh guna offline
+            </li>
+            <li className="flex items-center gap-1.5">
+              <span className="text-green-500">✓</span> Data anak selamat
+            </li>
+          </ul>
         </div>
       </section>
 
@@ -157,6 +233,29 @@ export default function Landing() {
         </div>
       </section>
 
+      <section className="mx-auto max-w-5xl px-4 py-16">
+        <h2 className="text-center text-2xl font-black text-ink-900">
+          Mula dalam 3 langkah sahaja
+        </h2>
+        <p className="mx-auto mt-3 max-w-xl text-center text-ink-500">
+          Tiada pemasangan rumit. Tiada langganan bulanan.
+        </p>
+        <ol className="mt-10 grid gap-6 sm:grid-cols-3">
+          {STEPS.map((step, i) => (
+            <li key={step.title} className="relative text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border-4 border-brand-200 bg-white text-3xl">
+                {step.emoji}
+              </div>
+              <span className="mt-3 inline-block rounded-full bg-brand-100 px-3 py-0.5 text-xs font-black uppercase tracking-wider text-brand-700">
+                Langkah {i + 1}
+              </span>
+              <h3 className="mt-2 font-black text-ink-900">{step.title}</h3>
+              <p className="mt-1 text-sm text-ink-500">{step.body}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+
       <section className="mx-auto max-w-3xl px-4 py-16">
         <div className="rounded-3xl border-4 border-brand-200 bg-white p-8 text-center">
           <p className="text-sm font-extrabold uppercase tracking-widest text-brand-600">
@@ -181,6 +280,51 @@ export default function Landing() {
           <Link to="/daftar" className="mt-8 inline-block">
             <Button className="px-10 py-4 text-lg">Daftar & Bayar</Button>
           </Link>
+        </div>
+      </section>
+
+      <section className="bg-white py-16">
+        <div className="mx-auto max-w-5xl px-4">
+          <h2 className="text-center text-2xl font-black text-ink-900">
+            Apa kata ibu bapa kami
+          </h2>
+          <p className="mx-auto mt-3 max-w-xl text-center text-ink-500">
+            Maklum balas daripada ibu bapa yang menggunakan Anak Pandai.
+          </p>
+          <div className="mt-10 grid gap-5 lg:grid-cols-3">
+            {TESTIMONIALS.map((t) => (
+              <figure key={t.name} className="card-3d flex flex-col">
+                <div aria-label="5 daripada 5 bintang" className="text-lg text-gold">
+                  ★★★★★
+                </div>
+                <blockquote className="mt-3 flex-1 text-ink-700">“{t.quote}”</blockquote>
+                <span className="mt-3 self-start rounded-full bg-green-100 px-3 py-0.5 text-xs font-black text-green-800">
+                  ✓ {t.highlight}
+                </span>
+                <figcaption className="mt-4 flex items-center gap-3 border-t-2 border-cream-200 pt-4">
+                  <CdnImage
+                    path={t.photo}
+                    alt={t.name}
+                    width={44}
+                    height={44}
+                    className="h-11 w-11 rounded-full object-cover"
+                    fallback={
+                      <span
+                        aria-hidden
+                        className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-100 font-black text-brand-700"
+                      >
+                        {t.name.split(' ').slice(-2, -1)[0]?.[0] ?? '?'}
+                      </span>
+                    }
+                  />
+                  <div>
+                    <p className="font-black text-ink-900">{t.name}</p>
+                    <p className="text-sm text-ink-300">{t.location}</p>
+                  </div>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
         </div>
       </section>
 

@@ -18,6 +18,10 @@ the games feel good, lean enough that hosting stays cheap.
      file in `public/` for content assets.
    - Video → **YouTube** embeds only. Never self-host video.
    - `public/` is for tiny UI chrome only (logo, favicon, placeholder QR).
+   - **Always render images through `<CdnImage>`** (`src/components/CdnImage.tsx`).
+     It reads the `VITE_IMAGE_CDN` env var and degrades to a CSS fallback when
+     the CDN is unset, so local development works without network access.
+     Never hardcode a CDN hostname in a component.
 
 2. **The app is a static SPA.** It must build to static files and be served by a
    CDN. No server-side rendering, no Node server process holding memory open.
@@ -59,6 +63,27 @@ Optimize the *delivery* (CDN, caching, lazy-loading), not the *experience*.
 - Does this ship to the client bundle? Can it be lazy-loaded?
 - Is this asset on a CDN, or is Railway paying to serve it?
 - Will this run on every page load, or only when the user acts?
+
+### Environment variables
+
+| Variable | Purpose |
+| --- | --- |
+| `VITE_SUPABASE_URL` | Supabase project URL. Unset ⇒ app runs in local demo mode. |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anon key. |
+| `VITE_IMAGE_CDN` | Cloudflare image base URL, no trailing slash. Unset ⇒ `<CdnImage>` renders its CSS fallback. |
+
+---
+
+## Placeholder content that must be replaced before launch
+
+These are deliberately fake and must not ship as-is:
+
+- **Testimonials** in `src/pages/Landing.tsx` (`TESTIMONIALS`). Fabricated
+  reviews are a misrepresentation risk under Malaysian consumer protection law.
+  Replace with real quotes and real photos, or remove the section.
+- **Hero image** `hero/keluarga-belajar.jpg` on the CDN. Until it is uploaded
+  the hero falls back to a CSS gradient, which is fine but less compelling.
+- **QR code** `public/qr-payment.svg` and `PAYMENT.payee` in `src/lib/config.ts`.
 
 ---
 

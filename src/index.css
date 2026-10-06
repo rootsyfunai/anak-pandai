@@ -28,6 +28,11 @@
   --color-correct: #22c55e;
   --color-wrong: #ef4444;
   --color-gold: #fbbf24;
+
+  /* Slightly rounder than Tailwind's default 1rem. Softer corners read as
+     friendlier, which matters for a product aimed at young children. */
+  --radius-2xl: 1.125rem;
+  --radius-3xl: 1.5rem;
 }
 
 @layer base {
@@ -47,10 +52,13 @@
 
 @layer components {
   /* Duolingo-style chunky button with a solid bottom edge that
-     compresses on press. */
+     compresses on press. Only colour and transform are transitioned:
+     `transition-all` also animates layout properties, which causes visible
+     jank on low-end Android phones. */
   .btn-3d {
     @apply relative inline-flex items-center justify-center rounded-2xl px-6 py-3
-           font-extrabold uppercase tracking-wide text-white transition-all
+           font-extrabold uppercase tracking-wide text-white
+           transition-[background-color,transform,box-shadow] duration-150
            active:translate-y-[3px] active:shadow-none disabled:opacity-50;
     box-shadow: 0 4px 0 0 var(--btn-shadow, rgb(0 0 0 / 0.25));
   }

@@ -28,6 +28,9 @@ gambar. Nyawa dan streak hanya bermula umur 7 tahun ke atas.
 - **Kod affiliate dijejak automatik** melalui `?ref=CODE` — pembeli tidak perlu taip apa-apa
 - **Pembayaran QR manual** dengan muat naik resit dan kelulusan admin
 - **Papan pemuka admin** untuk semak pesanan dan kira komisen
+- **Boleh dipasang sebagai app (PWA)** — ada manifest, ikon, dan service worker
+- **Boleh guna offline** — shell app dan aset build dicache, jadi anak boleh
+  terus belajar tanpa internet selepas lawatan pertama
 
 ## Mula
 
@@ -56,6 +59,29 @@ VITE_SUPABASE_ANON_KEY=xxxx
 ```sql
 update public.profiles set is_admin = true where email = 'anda@email.com';
 ```
+
+## Imej (Cloudflare CDN)
+
+**Jangan sekali-kali serve imej dari Railway** — egress akan membengkak kos.
+Semua imej mesti datang dari Cloudflare.
+
+1. Muat naik imej ke Cloudflare R2 atau Images.
+2. Tetapkan `VITE_IMAGE_CDN` kepada URL asas CDN (tanpa `/` di hujung):
+
+```
+VITE_IMAGE_CDN=https://imej.anakpandai.my
+```
+
+3. Guna komponen `<CdnImage path="hero/keluarga.jpg" alt="..." />`. Ia membaca
+   `VITE_IMAGE_CDN` dan memaparkan fallback CSS jika CDN belum diset, jadi
+   pembangunan tempatan tetap berfungsi tanpa internet.
+
+Imej yang perlu dimuat naik:
+
+| Path CDN | Guna |
+| --- | --- |
+| `hero/keluarga-belajar.jpg` | Latar hero di halaman utama |
+| `testimonials/*.jpg` | Gambar ibu bapa (lihat nota di bawah) |
 
 ## Aliran affiliate
 
@@ -126,7 +152,11 @@ ia adalah produknya. Optimumkan *penghantaran*, bukan *pengalaman*.
 
 - [ ] Gantikan `public/qr-payment.svg` dengan kod QR DuitNow sebenar
 - [ ] Kemas kini `PAYMENT` dalam `src/lib/config.ts` dengan nama akaun sebenar
-- [ ] Tambah `manifest.json` dan service worker untuk sokongan PWA/offline
+- [ ] Muat naik imej ke Cloudflare dan tetapkan `VITE_IMAGE_CDN`
+- [ ] **Gantikan testimoni palsu** dalam `TESTIMONIALS` (`src/pages/Landing.tsx`)
+      dengan petikan sebenar, atau buang seksyen itu. Testimoni yang direka
+      adalah risiko misrepresentasi di bawah undang-undang perlindungan
+      pengguna Malaysia.
 - [ ] Tambah halaman dasar privasi dan terma (keperluan PDPA)
 - [ ] Sediakan proses pembayaran komisen affiliate
 - [ ] Tambah lebih banyak pelajaran — 19 pelajaran adalah asas, bukan lengkap
@@ -136,11 +166,16 @@ ia adalah produknya. Optimumkan *penghantaran*, bukan *pengalaman*.
 
 ```
 src/
-  components/   UI kongsi (Button, Hud, Logo)
+  components/   UI kongsi (Button, CdnImage, Hud, Logo)
   data/         Sukatan dan kandungan pelajaran
   games/        Enjin permainan (XP, nyawa, streak, bintang)
-  lib/          Supabase, affiliate, config, progress, speech
+  lib/          Supabase, affiliate, config, progress, speech, pwa
   pages/        Landing, Path, Play, Checkout, Affiliate, Admin, SignUp, SignIn
+public/
+  sw.js         Service worker (offline + caching)
+  offline.html  Halaman fallback tanpa rangkaian
+scripts/
+  make-icons.mjs  Penjana ikon PWA (jalankan semula jika warna jenama berubah)
 supabase/
   migrations/   Skema pangkalan data dan polisi RLS
 ```
