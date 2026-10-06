@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '../components/Button'
 import { Logo } from '../components/Logo'
-import { isSupabaseConfigured, supabase } from '../lib/supabase'
+import { isSupabaseConfigured, loadSupabase } from '../lib/supabase'
 
 export default function SignIn() {
   const navigate = useNavigate()
@@ -16,11 +16,12 @@ export default function SignIn() {
     setBusy(true)
     setError(null)
 
-    if (!isSupabaseConfigured || !supabase) {
+    if (!isSupabaseConfigured) {
       navigate('/main')
       return
     }
 
+    const supabase = await loadSupabase()
     const { error: err } = await supabase.auth.signInWithPassword({ email, password })
     setBusy(false)
     if (err) {

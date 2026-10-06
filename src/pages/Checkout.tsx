@@ -4,7 +4,7 @@ import { Button } from '../components/Button'
 import { Logo } from '../components/Logo'
 import { PAYMENT, PRICE_MYR, formatMYR } from '../lib/config'
 import { getStoredRef } from '../lib/affiliate'
-import { isSupabaseConfigured, supabase } from '../lib/supabase'
+import { isSupabaseConfigured, loadSupabase } from '../lib/supabase'
 
 type Step = 'pay' | 'upload' | 'done'
 
@@ -24,7 +24,7 @@ export default function Checkout() {
     setBusy(true)
     setError(null)
 
-    if (!isSupabaseConfigured || !supabase) {
+    if (!isSupabaseConfigured) {
       // Local-only mode: record the submission so the flow is testable
       // before a Supabase project exists.
       const pending = JSON.parse(localStorage.getItem('ap_pending_orders') ?? '[]')
@@ -44,6 +44,7 @@ export default function Checkout() {
     }
 
     try {
+      const supabase = await loadSupabase()
       const { data: userData } = await supabase.auth.getUser()
       const user = userData.user
       if (!user) {

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '../components/Button'
 import { Logo } from '../components/Logo'
-import { isSupabaseConfigured, supabase } from '../lib/supabase'
+import { isSupabaseConfigured, loadSupabase } from '../lib/supabase'
 
 export default function SignUp() {
   const navigate = useNavigate()
@@ -17,12 +17,13 @@ export default function SignUp() {
     setBusy(true)
     setError(null)
 
-    if (!isSupabaseConfigured || !supabase) {
+    if (!isSupabaseConfigured) {
       // Local-only mode: go straight to checkout so the flow is walkable.
       navigate('/daftar/bayar')
       return
     }
 
+    const supabase = await loadSupabase()
     const { error: err } = await supabase.auth.signUp({
       email,
       password,

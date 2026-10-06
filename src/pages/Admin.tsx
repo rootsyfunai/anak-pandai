@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Button } from '../components/Button'
 import { Logo } from '../components/Logo'
 import { formatMYR } from '../lib/config'
-import { isSupabaseConfigured, supabase } from '../lib/supabase'
+import { isSupabaseConfigured, loadSupabase } from '../lib/supabase'
 
 interface PendingOrder {
   id: string
@@ -29,13 +29,14 @@ export default function Admin() {
     setLoading(true)
     setError(null)
 
-    if (!isSupabaseConfigured || !supabase) {
+    if (!isSupabaseConfigured) {
       const local = JSON.parse(localStorage.getItem('ap_pending_orders') ?? '[]') as PendingOrder[]
       setOrders(local)
       setLoading(false)
       return
     }
 
+    const supabase = await loadSupabase()
     const { data, error: err } = await supabase
       .from('orders')
       .select('*')
@@ -46,7 +47,7 @@ export default function Admin() {
   }
 
   async function decide(order: PendingOrder, approve: boolean) {
-    if (!isSupabaseConfigured || !supabase) {
+    if (!isSupabaseConfigured) {
       const local = JSON.parse(localStorage.getItem('ap_pending_orders') ?? '[]') as PendingOrder[]
       const next = local.map((o) =>
         o.id === order.id ? { ...o, status: approve ? 'approved' : 'rejected' } : o,
@@ -56,6 +57,7 @@ export default function Admin() {
       return
     }
 
+    const supabase = await loadSupabase()
     const { error: err } = await supabase
       .from('orders')
       .update({
