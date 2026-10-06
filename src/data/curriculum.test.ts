@@ -55,9 +55,11 @@ describe('lesson content', () => {
 
   it('gives every choice question an answer among its options', () => {
     for (const lesson of LESSONS) {
-      for (const q of lesson.questions) {
-        if (q.kind === 'choice' || q.kind === 'listen') {
-          expect(q.options).toContain(q.answer)
+      for (const level of lesson.levels) {
+        for (const q of level.questions) {
+          if (q.kind === 'choice' || q.kind === 'listen') {
+            expect(q.options).toContain(q.answer)
+          }
         }
       }
     }
@@ -65,8 +67,83 @@ describe('lesson content', () => {
 
   it('uses unique question ids within a lesson', () => {
     for (const lesson of LESSONS) {
-      const ids = lesson.questions.map((q) => q.id)
+      const ids = lesson.levels.flatMap((l) => l.questions.map((q) => q.id))
       expect(new Set(ids).size).toBe(ids.length)
+    }
+  })
+
+  it('numbers levels from 1 without gaps', () => {
+    for (const lesson of LESSONS) {
+      const indices = lesson.levels.map((l) => l.index)
+      expect(indices).toEqual(indices.map((_, i) => i + 1))
+    }
+  })
+
+  it('gives every level at least one question', () => {
+    for (const lesson of LESSONS) {
+      for (const level of lesson.levels) {
+        expect(level.questions.length).toBeGreaterThan(0)
+      }
+    }
+  })
+
+  it('gives every fillblank question an answer among its options', () => {
+    for (const lesson of LESSONS) {
+      for (const level of lesson.levels) {
+        for (const q of level.questions) {
+          if (q.kind === 'fillblank') {
+            expect(q.options).toContain(q.answer)
+            expect(q.sentence).toContain('___')
+          }
+        }
+      }
+    }
+  })
+
+  it('gives every dragdrop slot at least one accepted token', () => {
+    for (const lesson of LESSONS) {
+      for (const level of lesson.levels) {
+        for (const q of level.questions) {
+          if (q.kind === 'dragdrop') {
+            for (const slot of q.slots) {
+              expect(slot.accepts.length).toBeGreaterThan(0)
+              for (const token of slot.accepts) {
+                expect(q.tokens).toContain(token)
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+
+  it('gives every sort item a bucket that exists', () => {
+    for (const lesson of LESSONS) {
+      for (const level of lesson.levels) {
+        for (const q of level.questions) {
+          if (q.kind === 'sort') {
+            const bucketIds = q.buckets.map((b) => b.id)
+            for (const item of q.items) {
+              expect(bucketIds).toContain(item.bucket)
+            }
+          }
+        }
+      }
+    }
+  })
+
+  it('gives every story question an answer among its options', () => {
+    for (const lesson of LESSONS) {
+      for (const level of lesson.levels) {
+        for (const q of level.questions) {
+          if (q.kind === 'story') {
+            expect(q.panels.length).toBeGreaterThan(0)
+            for (const sq of q.questions) {
+              expect(sq.options).toContain(sq.answer)
+            }
+          }
+        }
+      }
     }
   })
 

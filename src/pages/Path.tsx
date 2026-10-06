@@ -5,7 +5,7 @@ import { Logo } from '../components/Logo'
 import { StreakBadge, XpBadge } from '../components/Hud'
 import { AGE_BANDS, AGE_BAND_ORDER, SUBJECTS, type AgeBand, type Subject } from '../data/curriculum'
 import { lessonsFor } from '../data/lessons'
-import { levelForXp } from '../games/engine'
+import { clearedLevelCount, isLessonComplete, levelForXp, levelKey } from '../games/engine'
 import { useProgress } from '../lib/useProgress'
 
 export default function Path() {
@@ -111,8 +111,13 @@ export default function Path() {
             <ol className="relative space-y-4 pl-6">
               <span className="absolute left-[11px] top-2 bottom-2 w-1 rounded bg-cream-200" />
               {lessons.map((lesson, i) => {
-                const done = progress.completedLessons.includes(lesson.id)
-                const locked = i > 0 && !progress.completedLessons.includes(lessons[i - 1].id)
+                const cleared = clearedLevelCount(lesson, progress.completedLevels)
+                const done = cleared === lesson.levels.length
+                const locked = i > 0 && !isLessonComplete(lessons[i - 1], progress.completedLevels)
+                // Resume at the first level that is not yet cleared.
+                const nextLevel = lesson.levels.find(
+                  (l) => !progress.completedLevels.includes(levelKey(lesson.id, l.index)),
+                )
                 return (
                   <li key={lesson.id} className="relative">
                     <span
@@ -128,7 +133,7 @@ export default function Path() {
                     </span>
                     <div className={`card-3d ${locked ? 'opacity-60' : ''}`}>
                       <div className="flex items-start justify-between gap-3">
-                        <div>
+                        <div className="min-w-0">
                           <p className="font-black text-ink-900">{lesson.title}</p>
                           <p className="text-sm text-ink-300">{lesson.objective}</p>
                           {lesson.standard && (
@@ -136,18 +141,47 @@ export default function Path() {
                               {lesson.standard}
                             </p>
                           )}
+                          {/* Level pips: filled once cleared, ringed for the
+                              next one to play, dim for still-locked. */}
+                          <div className="mt-2 flex items-center gap-1.5">
+                            {lesson.levels.map((l) => {
+                              const isCleared = progress.completedLevels.includes(
+                                levelKey(lesson.id, l.index),
+                              )
+                              const isNext = nextLevel?.index === l.index
+                              return (
+                                <span
+                                  key={l.index}
+                                  title={`Tahap ${l.index}: ${l.title}`}
+                                  className={`h-2.5 w-2.5 rounded-full ${
+                                    isCleared
+                                      ? 'bg-green-500'
+                                      : isNext
+                                        ? 'bg-brand-500 ring-2 ring-brand-200'
+                                        : 'bg-cream-200'
+                                  }`}
+                                />
+                              )
+                            })}
+                            <span className="ml-1 text-xs font-bold text-ink-300">
+                              {cleared}/{lesson.levels.length} tahap
+                            </span>
+                          </div>
                         </div>
                         {locked ? (
                           <Button variant="neutral" disabled className="shrink-0 px-4 py-2 text-sm">
                             Kunci
                           </Button>
                         ) : (
-                          <Link to={`/main/play/${lesson.id}`} className="shrink-0">
+                          <Link
+                            to={`/main/play/${lesson.id}/${nextLevel?.index ?? 1}`}
+                            className="shrink-0"
+                          >
                             <Button
                               variant={done ? 'success' : 'primary'}
                               className="px-4 py-2 text-sm"
                             >
-                              {done ? 'Ulang' : 'Mula'}
+                              {done ? 'Ulang' : cleared > 0 ? 'Sambung' : 'Mula'}
                             </Button>
                           </Link>
                         )}

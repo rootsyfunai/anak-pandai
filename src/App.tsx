@@ -27,6 +27,7 @@ export default function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/main" element={<Path />} />
         <Route path="/main/play/:lessonId" element={<Play />} />
+        <Route path="/main/play/:lessonId/:levelIndex" element={<Play />} />
         <Route path="/daftar" element={<SignUp />} />
         <Route path="/daftar/bayar" element={<Checkout />} />
         <Route path="/masuk" element={<SignIn />} />

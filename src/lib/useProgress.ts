@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { nextStreak, toDateKey } from '../games/engine'
+import { levelKey, nextStreak, toDateKey } from '../games/engine'
 
 const KEY = 'ap_progress'
 
@@ -8,7 +8,8 @@ export interface Progress {
   xp: number
   streakDays: number
   lastPlayedOn: string | null
-  completedLessons: string[]
+  /** Keys of the form `lessonId:levelIndex`. */
+  completedLevels: string[]
 }
 
 const EMPTY: Progress = {
@@ -16,14 +17,27 @@ const EMPTY: Progress = {
   xp: 0,
   streakDays: 0,
   lastPlayedOn: null,
-  completedLessons: [],
+  completedLevels: [],
+}
+
+/**
+ * Older builds stored a flat `completedLessons` array. Treat each of those
+ * as level 1 cleared, so an existing child does not lose their progress.
+ */
+function migrate(raw: Record<string, unknown>): Progress {
+  const merged = { ...EMPTY, ...(raw as Partial<Progress>) }
+  const legacy = raw.completedLessons
+  if (Array.isArray(legacy) && merged.completedLevels.length === 0) {
+    merged.completedLevels = legacy.map((id) => levelKey(String(id), 1))
+  }
+  return merged
 }
 
 function load(): Progress {
   try {
     const raw = localStorage.getItem(KEY)
     if (!raw) return EMPTY
-    return { ...EMPTY, ...(JSON.parse(raw) as Partial<Progress>) }
+    return migrate(JSON.parse(raw) as Record<string, unknown>)
   } catch {
     return EMPTY
   }
@@ -44,23 +58,22 @@ export function useProgress() {
     }
   }, [progress])
 
-  const completeLesson = useCallback((lessonId: string, xpEarned: number) => {
+  const completeLevel = useCallback((lessonId: string, levelIndex: number, xpEarned: number) => {
     setProgress((prev) => {
       const today = toDateKey(new Date())
-      const alreadyDone = prev.completedLessons.includes(lessonId)
+      const key = levelKey(lessonId, levelIndex)
+      const alreadyDone = prev.completedLevels.includes(key)
       return {
         ...prev,
         xp: prev.xp + xpEarned,
         streakDays: nextStreak(prev.streakDays, prev.lastPlayedOn),
         lastPlayedOn: today,
-        completedLessons: alreadyDone
-          ? prev.completedLessons
-          : [...prev.completedLessons, lessonId],
+        completedLevels: alreadyDone ? prev.completedLevels : [...prev.completedLevels, key],
       }
     })
   }, [])
 
   const reset = useCallback(() => setProgress(EMPTY), [])
 
-  return { progress, completeLesson, reset }
+  return { progress, completeLevel, reset }
 }

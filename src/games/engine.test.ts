@@ -3,16 +3,23 @@ import {
   accuracy,
   advance,
   answer,
+  clearedLevelCount,
+  isLessonComplete,
+  isLevelUnlocked,
   levelForXp,
+  levelKey,
+  levelOf,
   MAX_HEARTS,
   nextStreak,
   stars,
   startSession,
   toDateKey,
+  xpMultiplierForLevel,
 } from './engine'
 import { lessonById } from '../data/lessons'
 
 const lesson = lessonById('kspk-nombor-10')!
+const level1 = levelOf(lesson, 1)!
 
 describe('session flow', () => {
   it('starts with full hearts and no progress', () => {
@@ -21,6 +28,7 @@ describe('session flow', () => {
     expect(s.index).toBe(0)
     expect(s.xp).toBe(0)
     expect(s.finished).toBe(false)
+    expect(s.levelIndex).toBe(1)
   })
 
   it('awards XP for a correct answer', () => {
@@ -58,13 +66,51 @@ describe('session flow', () => {
 
   it('advances through questions and finishes with a bonus', () => {
     let s = startSession(lesson, '7-9')
-    const total = lesson.questions.length
+    const total = level1.questions.length
     for (let i = 0; i < total; i++) {
       s = answer(s, true, '7-9')
       s = advance(lesson, s)
     }
     expect(s.finished).toBe(true)
     expect(s.xp).toBe(total * 10 + 20)
+  })
+})
+
+describe('level progression', () => {
+  it('scales XP with the level index', () => {
+    expect(xpMultiplierForLevel(1)).toBe(1)
+    expect(xpMultiplierForLevel(2)).toBe(1.25)
+    expect(xpMultiplierForLevel(3)).toBe(1.5)
+  })
+
+  it('awards more XP for a later level', () => {
+    const l1 = answer(startSession(lesson, '7-9', 1), true, '7-9')
+    const l3 = answer(startSession(lesson, '7-9', 3), true, '7-9')
+    expect(l3.xp).toBeGreaterThan(l1.xp)
+  })
+
+  it('always unlocks level 1', () => {
+    expect(isLevelUnlocked(lesson, 1, [])).toBe(true)
+  })
+
+  it('locks level 2 until level 1 is cleared', () => {
+    expect(isLevelUnlocked(lesson, 2, [])).toBe(false)
+    expect(isLevelUnlocked(lesson, 2, [levelKey(lesson.id, 1)])).toBe(true)
+  })
+
+  it('counts cleared levels', () => {
+    expect(clearedLevelCount(lesson, [])).toBe(0)
+    expect(clearedLevelCount(lesson, [levelKey(lesson.id, 1)])).toBe(1)
+  })
+
+  it('reports the lesson complete only when every level is cleared', () => {
+    const all = lesson.levels.map((l) => levelKey(lesson.id, l.index))
+    expect(isLessonComplete(lesson, all.slice(0, -1))).toBe(false)
+    expect(isLessonComplete(lesson, all)).toBe(true)
+  })
+
+  it('falls back to the first level for a stale index', () => {
+    expect(levelOf(lesson, 99)?.index).toBe(1)
   })
 })
 

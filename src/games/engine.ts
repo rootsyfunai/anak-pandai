@@ -1,12 +1,19 @@
 import type { AgeBand } from '../data/curriculum'
-import type { Lesson, Question } from '../data/lessons'
+import type { Lesson, Level, Question } from '../data/lessons'
 
 export const MAX_HEARTS = 5
 export const XP_PER_CORRECT = 10
 export const XP_LESSON_BONUS = 20
 
+/** Later levels are worth more, so replaying an easy level is not optimal. */
+export function xpMultiplierForLevel(levelIndex: number): number {
+  return 1 + (levelIndex - 1) * 0.25
+}
+
 export interface SessionState {
   lessonId: string
+  /** 1-based level index within the lesson. */
+  levelIndex: number
   band: AgeBand
   index: number
   hearts: number
@@ -20,9 +27,10 @@ export interface SessionState {
   failed: boolean
 }
 
-export function startSession(lesson: Lesson, band: AgeBand): SessionState {
+export function startSession(lesson: Lesson, band: AgeBand, levelIndex = 1): SessionState {
   return {
     lessonId: lesson.id,
+    levelIndex,
     band,
     index: 0,
     hearts: MAX_HEARTS,
@@ -36,8 +44,14 @@ export function startSession(lesson: Lesson, band: AgeBand): SessionState {
   }
 }
 
+/** The level being played, falling back to the first if the index is stale. */
+export function levelOf(lesson: Lesson, levelIndex: number): Level | undefined {
+  return lesson.levels.find((l) => l.index === levelIndex) ?? lesson.levels[0]
+}
+
 export function currentQuestion(lesson: Lesson, state: SessionState): Question | null {
-  return lesson.questions[state.index] ?? null
+  const level = levelOf(lesson, state.levelIndex)
+  return level?.questions[state.index] ?? null
 }
 
 /**
@@ -55,7 +69,7 @@ export function answer(state: SessionState, isCorrect: boolean, band: AgeBand): 
 
   if (isCorrect) {
     next.correct = state.correct + 1
-    next.xp = state.xp + XP_PER_CORRECT
+    next.xp = state.xp + Math.round(XP_PER_CORRECT * xpMultiplierForLevel(state.levelIndex))
   } else if (hasHearts) {
     next.hearts = Math.max(0, state.hearts - 1)
     if (next.hearts === 0) {
@@ -67,13 +81,16 @@ export function answer(state: SessionState, isCorrect: boolean, band: AgeBand): 
   return next
 }
 
-/** Advance to the next question, or finish the lesson. */
+/** Advance to the next question, or finish the level. */
 export function advance(lesson: Lesson, state: SessionState): SessionState {
   if (state.finished) return state
 
-  const isLast = state.index >= lesson.questions.length - 1
+  const level = levelOf(lesson, state.levelIndex)
+  const total = level?.questions.length ?? 0
+  const isLast = state.index >= total - 1
   if (isLast) {
-    return { ...state, finished: true, xp: state.xp + XP_LESSON_BONUS }
+    const bonus = Math.round(XP_LESSON_BONUS * xpMultiplierForLevel(state.levelIndex))
+    return { ...state, finished: true, xp: state.xp + bonus }
   }
 
   return {
@@ -137,4 +154,32 @@ export function levelForXp(xp: number): { level: number; intoLevel: number; need
     needed = Math.round(needed * 1.25)
   }
   return { level, intoLevel: remaining, needed }
+}
+
+/** Stable key for "this level of this lesson", used by the progress store. */
+export function levelKey(lessonId: string, levelIndex: number): string {
+  return `${lessonId}:${levelIndex}`
+}
+
+/**
+ * A level unlocks once the previous one is cleared. Level 1 is always open,
+ * so a child can never be locked out of a lesson entirely.
+ */
+export function isLevelUnlocked(
+  lesson: Lesson,
+  levelIndex: number,
+  completedLevels: string[],
+): boolean {
+  if (levelIndex <= 1) return true
+  return completedLevels.includes(levelKey(lesson.id, levelIndex - 1))
+}
+
+/** How many of a lesson's levels are cleared. */
+export function clearedLevelCount(lesson: Lesson, completedLevels: string[]): number {
+  return lesson.levels.filter((l) => completedLevels.includes(levelKey(lesson.id, l.index))).length
+}
+
+/** True once every level of the lesson is cleared. */
+export function isLessonComplete(lesson: Lesson, completedLevels: string[]): boolean {
+  return clearedLevelCount(lesson, completedLevels) === lesson.levels.length
 }

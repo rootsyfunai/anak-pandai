@@ -2,6 +2,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Button } from '../components/Button'
 import { Hearts, ProgressBar } from '../components/Hud'
+import {
+  DragDropBoard,
+  FillBlankBoard,
+  MemoryBoard,
+  SortBoard,
+  StoryBoard,
+  TraceBoard,
+} from '../components/QuestionBoards'
 import { AGE_BANDS, type AgeBand } from '../data/curriculum'
 import { lessonById, type Question } from '../data/lessons'
 import {
@@ -9,6 +17,7 @@ import {
   advance,
   answer,
   currentQuestion,
+  levelOf,
   MAX_HEARTS,
   stars,
   startSession,
@@ -18,27 +27,31 @@ import { speak } from '../lib/speech'
 import { useProgress } from '../lib/useProgress'
 
 export default function Play() {
-  const { lessonId = '' } = useParams()
+  const { lessonId = '', levelIndex = '1' } = useParams()
   const navigate = useNavigate()
   const lesson = lessonById(lessonId)
-  const { completeLesson } = useProgress()
+  const { completeLevel } = useProgress()
 
+  const requestedLevel = Number.parseInt(levelIndex, 10) || 1
   const band: AgeBand = lesson?.band ?? '4-6'
   const bandMeta = AGE_BANDS[band]
 
   const [state, setState] = useState<SessionState | null>(() =>
-    lesson ? startSession(lesson, lesson.band) : null,
+    lesson ? startSession(lesson, lesson.band, requestedLevel) : null,
   )
   const [selected, setSelected] = useState<string | null>(null)
   const [shake, setShake] = useState(false)
 
-  // Reset the session when navigating between lessons.
-  const [activeLessonId, setActiveLessonId] = useState(lesson?.id ?? null)
-  if (lesson && lesson.id !== activeLessonId) {
-    setActiveLessonId(lesson.id)
-    setState(startSession(lesson, lesson.band))
+  // Reset the session when navigating between lessons or levels.
+  const sessionKey = lesson ? `${lesson.id}:${requestedLevel}` : null
+  const [activeKey, setActiveKey] = useState(sessionKey)
+  if (lesson && sessionKey !== activeKey) {
+    setActiveKey(sessionKey)
+    setState(startSession(lesson, lesson.band, requestedLevel))
     setSelected(null)
   }
+
+  const level = lesson ? levelOf(lesson, requestedLevel) : undefined
 
   const question = useMemo(
     () => (lesson && state ? currentQuestion(lesson, state) : null),
@@ -55,7 +68,21 @@ export default function Play() {
   const handleAnswer = useCallback(
     (value: string) => {
       if (!lesson || !state || !question || state.revealed) return
-      const correct = question.kind === 'match' ? true : value === question.answer
+      // Boards that are self-checking (match, dragdrop, trace, sort, memory,
+      // story) only call back once the child has got it right, so they are
+      // always correct by the time we get here.
+      const selfChecking =
+        question.kind === 'match' ||
+        question.kind === 'dragdrop' ||
+        question.kind === 'trace' ||
+        question.kind === 'sort' ||
+        question.kind === 'memory' ||
+        question.kind === 'story'
+      const correct = selfChecking
+        ? true
+        : question.kind === 'fillblank'
+          ? value === question.answer
+          : value === question.answer
       setSelected(value)
       if (!correct) {
         setShake(true)
@@ -71,12 +98,12 @@ export default function Play() {
     setSelected(null)
     const next = advance(lesson, state)
     if (next.finished && !next.failed) {
-      completeLesson(lesson.id, next.xp)
+      completeLevel(lesson.id, state.levelIndex, next.xp)
     }
     setState(next)
-  }, [lesson, state, completeLesson])
+  }, [lesson, state, completeLevel])
 
-  if (!lesson) {
+  if (!lesson || !level) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-6">
         <p className="text-xl font-bold">Pelajaran tidak dijumpai.</p>
@@ -92,7 +119,14 @@ export default function Play() {
   }
 
   if (state.finished) {
-    return <Summary lesson={lesson} state={state} onDone={() => navigate('/main')} />
+    return (
+      <Summary
+        lessonTitle={lesson.title}
+        levelTitle={level.title}
+        state={state}
+        onDone={() => navigate('/main')}
+      />
+    )
   }
 
   const isCorrect = state.lastAnswerCorrect === true
@@ -104,13 +138,16 @@ export default function Play() {
           ✕
         </Link>
         <div className="flex-1">
-          <ProgressBar value={state.index} max={lesson.questions.length} />
+          <ProgressBar value={state.index} max={level.questions.length} />
         </div>
         {bandMeta.hasHearts && <Hearts hearts={state.hearts} />}
       </header>
 
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 pb-40">
-        <h1 className="text-center text-2xl font-black text-ink-900">{question.prompt}</h1>
+        <p className="text-center text-xs font-black uppercase tracking-widest text-brand-500">
+          Tahap {level.index} · {level.title}
+        </p>
+        <h1 className="mt-1 text-center text-2xl font-black text-ink-900">{question.prompt}</h1>
 
         {question.kind === 'listen' && (
           <>
@@ -163,6 +200,30 @@ export default function Play() {
         {question.kind === 'match' && (
           <MatchBoard question={question} onComplete={() => handleAnswer('match')} />
         )}
+
+        {question.kind === 'dragdrop' && (
+          <DragDropBoard question={question} onComplete={() => handleAnswer('dragdrop')} />
+        )}
+
+        {question.kind === 'fillblank' && (
+          <FillBlankBoard question={question} onComplete={() => handleAnswer(question.answer)} />
+        )}
+
+        {question.kind === 'trace' && (
+          <TraceBoard question={question} onComplete={() => handleAnswer('trace')} />
+        )}
+
+        {question.kind === 'story' && (
+          <StoryBoard question={question} onComplete={() => handleAnswer('story')} />
+        )}
+
+        {question.kind === 'sort' && (
+          <SortBoard question={question} onComplete={() => handleAnswer('sort')} />
+        )}
+
+        {question.kind === 'memory' && (
+          <MemoryBoard question={question} onComplete={() => handleAnswer('memory')} />
+        )}
       </main>
 
       {state.revealed && (
@@ -176,10 +237,8 @@ export default function Play() {
               <p className={`text-lg font-black ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>
                 {isCorrect ? '✅ Betul!' : '❌ Cuba lagi'}
               </p>
-              {!isCorrect && question.kind === 'choice' && (
-                <p className="text-sm font-semibold text-red-600">
-                  Jawapan: {question.answer}
-                </p>
+              {!isCorrect && (question.kind === 'choice' || question.kind === 'listen') && (
+                <p className="text-sm font-semibold text-red-600">Jawapan: {question.answer}</p>
               )}
             </div>
             <Button variant={isCorrect ? 'success' : 'danger'} onClick={handleContinue}>
@@ -294,11 +353,13 @@ function MatchBoard({
 }
 
 function Summary({
-  lesson,
+  lessonTitle,
+  levelTitle,
   state,
   onDone,
 }: {
-  lesson: { title: string }
+  lessonTitle: string
+  levelTitle: string
   state: SessionState
   onDone: () => void
 }) {
@@ -311,7 +372,9 @@ function Summary({
       <h1 className="text-3xl font-black text-ink-900">
         {state.failed ? 'Cuba lagi!' : 'Syabas!'}
       </h1>
-      <p className="font-bold text-ink-300">{lesson.title}</p>
+      <p className="font-bold text-ink-300">
+        {lessonTitle} · Tahap {state.levelIndex}: {levelTitle}
+      </p>
 
       <div className="flex gap-2 text-4xl">
         {[0, 1, 2].map((i) => (
