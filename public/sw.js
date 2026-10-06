@@ -17,7 +17,7 @@
  * deletes every cache that does not match, which is what evicts old builds.
  */
 
-const CACHE_VERSION = 'v1'
+const CACHE_VERSION = 'v2'
 const SHELL_CACHE = `ap-shell-${CACHE_VERSION}`
 const ASSET_CACHE = `ap-assets-${CACHE_VERSION}`
 const OFFLINE_URL = '/offline.html'
@@ -26,6 +26,11 @@ const OFFLINE_URL = '/offline.html'
  * The minimum needed to render something useful offline. Hashed build assets
  * are not listed here because their names are not known at author time; they
  * are cached on first fetch instead.
+ *
+ * The shell HTML is precached rather than relying on the navigation handler:
+ * the worker does not control the page during its own install, so the very
+ * first navigation is never intercepted. Without this, a user who installs
+ * the app and immediately goes offline would have no cached shell at all.
  */
 const PRECACHE = [
   '/',
@@ -105,6 +110,8 @@ self.addEventListener('fetch', (event) => {
           }
           return response
         } catch {
+          // Offline. Prefer the cached shell so the app opens fully; fall back
+          // to the standalone offline page, which is self-contained.
           const cached = await caches.match('/')
           if (cached) return cached
           const offline = await caches.match(OFFLINE_URL)
