@@ -1,0 +1,31 @@
+# Nixpacks build config for Railway.
+#
+# Why this file exists: Nixpacks sets NODE_ENV=production by default, which
+# makes `npm ci` skip devDependencies. The entire build toolchain (typescript,
+# vite, @vitejs/plugin-react, @tailwindcss/vite) lives in devDependencies, so a
+# production-only install cannot build this app — `tsc` is simply not present.
+#
+# NODE_ENV is therefore pinned to development for the install and build phases.
+# It is set back to production for the start phase, where it belongs: the
+# runtime serves pre-built static files and must not install anything.
+#
+# `npm ci` runs exactly once, here. It must not be repeated in railway.json's
+# buildCommand — a second install over a populated node_modules is what caused
+# the EBUSY crash on node_modules/.cache.
+
+[phases.setup]
+nixPkgs = ["nodejs_22"]
+
+[phases.install]
+cmds = ["npm ci"]
+dependsOn = ["setup"]
+variables = { NODE_ENV = "development" }
+
+[phases.build]
+cmds = ["npm run build"]
+dependsOn = ["install"]
+variables = { NODE_ENV = "development" }
+
+[start]
+cmd = "node server.mjs"
+variables = { NODE_ENV = "production" }
