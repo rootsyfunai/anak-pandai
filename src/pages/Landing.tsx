@@ -250,51 +250,6 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="bg-white py-16">
-        <div className="mx-auto max-w-5xl px-4">
-          <h2 className="text-center text-2xl font-black text-ink-900">
-            Apa kata ibu bapa kami
-          </h2>
-          <p className="mx-auto mt-3 max-w-xl text-center text-ink-500">
-            Maklum balas daripada ibu bapa yang menggunakan Anak Pandai.
-          </p>
-          <div className="mt-10 grid gap-5 lg:grid-cols-3">
-            {TESTIMONIALS.map((t) => (
-              <figure key={t.name} className="card-3d flex flex-col">
-                <div aria-label="5 daripada 5 bintang" className="text-lg text-gold">
-                  ★★★★★
-                </div>
-                <blockquote className="mt-3 flex-1 text-ink-700">“{t.quote}”</blockquote>
-                <span className="mt-3 self-start rounded-full bg-green-100 px-3 py-0.5 text-xs font-black text-green-800">
-                  ✓ {t.highlight}
-                </span>
-                <figcaption className="mt-4 flex items-center gap-3 border-t-2 border-cream-200 pt-4">
-                  <CdnImage
-                    path={t.photo}
-                    alt={t.name}
-                    width={44}
-                    height={44}
-                    className="h-11 w-11 rounded-full object-cover"
-                    fallback={
-                      <span
-                        aria-hidden
-                        className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-100 font-black text-brand-700"
-                      >
-                        {t.name.split(' ').slice(-2, -1)[0]?.[0] ?? '?'}
-                      </span>
-                    }
-                  />
-                  <div>
-                    <p className="font-black text-ink-900">{t.name}</p>
-                    <p className="text-sm text-ink-300">{t.location}</p>
-                  </div>
-                </figcaption>
-              </figure>
-            ))}
-          </div>
-        </div>
-      </section>
-
       <section className="bg-brand-700 py-16 text-white">
         <div className="mx-auto max-w-3xl px-4 text-center">
           <h2 className="text-3xl font-black">Jana pendapatan sebagai affiliate</h2>

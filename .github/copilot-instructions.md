@@ -78,9 +78,6 @@ Optimize the *delivery* (CDN, caching, lazy-loading), not the *experience*.
 
 These are deliberately fake and must not ship as-is:
 
-- **Testimonials** in `src/pages/Landing.tsx` (`TESTIMONIALS`). Fabricated
-  reviews are a misrepresentation risk under Malaysian consumer protection law.
-  Replace with real quotes and real photos, or remove the section.
 - **Hero image** `hero/keluarga-belajar.jpg` on the CDN. Until it is uploaded
   the hero falls back to a CSS gradient, which is fine but less compelling.
 - **QR code** `public/qr-payment.svg` and `PAYMENT.payee` in `src/lib/config.ts`.
