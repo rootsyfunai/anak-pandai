@@ -42,39 +42,6 @@ const FEATURES = [  {
 
 const CURRENT_YEAR = new Date().getFullYear()
 
-/**
- * Parent testimonials. These are illustrative placeholders — replace with
- * real quotes and real photos (on the CDN) before launch. Fabricated social
- * proof is both an integrity problem and, under Malaysian consumer
- * protection law, a misrepresentation risk.
- */
-const TESTIMONIALS = [
-  {
-    quote:
-      'Anak saya umur 5 tahun boleh main sendiri tanpa saya perlu duduk sebelah. Latihan pendek, jadi dia tak rasa terbeban.',
-    name: 'Puan Nurul Aina',
-    location: 'Shah Alam, Selangor',
-    photo: 'testimonials/nurul-aina.jpg',
-    highlight: 'Anak main sendiri',
-  },
-  {
-    quote:
-      'Saya suka susunan subjek ikut KSPK dan KSSR. Bila cikgu sebut topik di sekolah, anak saya sudah pernah jumpa di app.',
-    name: 'Encik Faizal Rahman',
-    location: 'Johor Bahru, Johor',
-    photo: 'testimonials/faizal-rahman.jpg',
-    highlight: 'Ikut sukatan sekolah',
-  },
-  {
-    quote:
-      'Laporan kemajuan sangat membantu. Saya nampak subjek mana anak perlu lebih latihan, jadi boleh fokus di situ.',
-    name: 'Puan Kavitha Subramaniam',
-    location: 'Ipoh, Perak',
-    photo: 'testimonials/kavitha.jpg',
-    highlight: 'Nampak kemajuan',
-  },
-]
-
 const STEPS = [
   {
     emoji: '📝',
