@@ -45,7 +45,7 @@ aliran sebelum menyediakan backend.
 
 ## Sambung Railway Postgres
 
-App menggunakan Railway Postgres melalui API same-origin dalam `server.mjs`.
+App menggunakan Railway Postgres melalui API same-origin dalam `server/`.
 Connection string tidak pernah dihantar ke pelayar.
 
 1. Tambah servis **Postgres** pada projek Railway.
@@ -125,11 +125,11 @@ dibina supaya bil kekal rendah tanpa mengorbankan kualiti permainan.
    - Imej → **Cloudflare** (R2 atau Images). Sentiasa guna URL CDN.
    - Video → **YouTube** sahaja.
    - `public/` hanya untuk UI kecil (logo, favicon, QR).
-2. **App ini SPA statik.** `server.mjs` hanya menghidangkan fail siap bina —
+2. **App ini SPA statik.** `server/index.mjs` hanya menghidangkan fail siap bina —
    tiada proses Node yang memegang memori terbuka.
 3. **Bundle klien mesti kecil.** Setiap KB dimuat turun oleh setiap pelawat.
    - Route dipecah dengan `React.lazy` — lihat `src/App.tsx`.
-   - Pakej Postgres, auth dan R2 hanya digunakan oleh `server.mjs`, bukan
+   - Pakej Postgres, auth dan R2 hanya digunakan oleh `server/`, bukan
      bundle pelayar.
    - Selepas tambah sebarang pakej, semak saiz bundle.
 4. **Cache agresif.** Fail ber-hash di-cache 1 tahun (`immutable`); HTML sentiasa
@@ -171,17 +171,19 @@ ia adalah produknya. Optimumkan *penghantaran*, bukan *pengalaman*.
 ## Struktur
 
 ```
+server/
+  index.mjs     Pelayan HTTP: SPA, cache, mampatan
+  api.mjs       Laluan /api/* (auth, progress, pesanan, admin)
+  core.mjs      Pool Postgres, R2, e-mel, sesi, had kadar
 src/
-  components/   UI kongsi (Button, CdnImage, Hud, Logo)
+  components/   UI kongsi (Button, CdnImage, Hud, Logo, AccountButton)
   data/         Sukatan dan kandungan pelajaran
   games/        Enjin permainan (XP, nyawa, streak, bintang)
-  lib/          API Railway, affiliate, config, progress, speech, pwa
-  pages/        Landing, Path, Play, Checkout, Affiliate, Admin, SignUp, SignIn
-public/
-  sw.js         Service worker (offline + caching)
-  offline.html  Halaman fallback tanpa rangkaian
-scripts/
-  make-icons.mjs  Penjana ikon PWA (jalankan semula jika warna jenama berubah)
+  lib/          API Railway, affiliate, config, progress, akses, speech, pwa
+  pages/        Landing, Path, Play, Checkout, Affiliate, Admin, auth
+public/         Chrome UI sahaja (ikon, manifest, service worker, QR)
+scripts/        Penjana ikon PWA
 db/
-  migrations/   Skema pangkalan data Railway Postgres
+  migrations/   Skema Postgres (dijalankan sekali, direkod dalam schema_migrations)
+  migrate.mjs   Pelari migrasi
 ```

@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { AccountButton } from '../components/AccountButton'
 import { Button } from '../components/Button'
 import { Logo } from '../components/Logo'
 import { formatMYR } from '../lib/config'
-import { decideOrder, listOrders, type Order } from '../lib/api'
+import { decideOrder, listOrders, receiptUrl, type Order } from '../lib/api'
 
 type PendingOrder = Order
 
@@ -13,12 +14,10 @@ export default function Admin() {
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-
     try {
       const result = await listOrders()
       setOrders(result.orders)
+      setError(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal memuatkan pesanan.')
     } finally {
@@ -27,8 +26,24 @@ export default function Admin() {
   }, [])
 
   useEffect(() => {
-    void load()
-  }, [load])
+    let cancelled = false
+    listOrders()
+      .then((result) => {
+        if (cancelled) return
+        setOrders(result.orders)
+        setError(null)
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return
+        setError(err instanceof Error ? err.message : 'Gagal memuatkan pesanan.')
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   async function decide(order: PendingOrder, approve: boolean) {
     try {
@@ -49,9 +64,12 @@ export default function Admin() {
       <header className="border-b-2 border-cream-200 bg-white">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-4">
           <Logo />
-          <span className="rounded-full bg-ink-900 px-3 py-1 text-sm font-extrabold text-white">
-            Admin
-          </span>
+          <div className="flex items-center gap-4">
+            <span className="rounded-full bg-ink-900 px-3 py-1 text-sm font-extrabold text-white">
+              Admin
+            </span>
+            <AccountButton email={null} signedIn />
+          </div>
         </div>
       </header>
 
@@ -83,6 +101,9 @@ export default function Admin() {
                     <p className="text-sm text-ink-300">
                       {new Date(o.created_at).toLocaleString('ms-MY')}
                     </p>
+                    {o.parent_email && (
+                      <p className="text-sm font-bold text-ink-700">{o.parent_email}</p>
+                    )}
                     {o.affiliate_code && (
                       <p className="mt-1 text-sm font-bold text-brand-600">
                         Kod affiliate: {o.affiliate_code}
@@ -92,7 +113,14 @@ export default function Admin() {
                       <p className="mt-1 text-sm text-ink-500">Nota: {o.reference_note}</p>
                     )}
                     {o.proof_path && (
-                      <p className="mt-1 text-xs text-ink-300">Resit: {o.proof_path}</p>
+                      <a
+                        href={receiptUrl(o.id)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-2 inline-block text-sm font-black text-brand-600 underline"
+                      >
+                        Lihat resit ↗
+                      </a>
                     )}
                   </div>
                   <div className="flex items-center gap-2">

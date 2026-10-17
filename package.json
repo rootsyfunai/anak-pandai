@@ -13,11 +13,12 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "preview": "vite preview",
-    "start": "node server.mjs",
+    "start": "node server/index.mjs",
     "db:migrate": "node db/migrate.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.911.0",
+    "@aws-sdk/s3-request-presigner": "^3.911.0",
     "busboy": "^1.6.0",
     "pg": "^8.16.3",
     "react": "^19.2.8",

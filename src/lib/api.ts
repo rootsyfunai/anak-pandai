@@ -5,6 +5,15 @@ export interface ApiUser {
   is_admin: boolean
 }
 
+export class ApiError extends Error {
+  status: number
+
+  constructor(message: string, status: number) {
+    super(message)
+    this.status = status
+  }
+}
+
 let cachedUser: ApiUser | null | undefined
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -16,7 +25,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     headers,
   })
   const body = (await response.json()) as { error?: string } & T
-  if (!response.ok) throw new Error(body.error ?? 'Permintaan gagal.')
+  if (!response.ok) throw new ApiError(body.error ?? 'Permintaan gagal.', response.status)
   return body
 }
 
@@ -31,6 +40,28 @@ export function signIn(email: string, password: string) {
   return request<{ user: ApiUser }>('/auth/login', {
     method: 'POST',
     body: JSON.stringify({ email, password }),
+  })
+}
+
+export async function signOut() {
+  try {
+    await request<{ ok: boolean }>('/auth/logout', { method: 'POST' })
+  } finally {
+    cachedUser = null
+  }
+}
+
+export function requestPasswordReset(email: string) {
+  return request<{ ok: boolean; message: string }>('/auth/forgot', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  })
+}
+
+export function resetPassword(token: string, password: string) {
+  return request<{ ok: boolean }>('/auth/reset', {
+    method: 'POST',
+    body: JSON.stringify({ token, password }),
   })
 }
 
@@ -50,6 +81,57 @@ export function clearCurrentUser() {
   cachedUser = null
 }
 
+export interface AccessState {
+  user: ApiUser | null
+  hasAccess: boolean
+  isAdmin: boolean
+}
+
+/** Whether the signed-in parent has paid access. Anonymous users never do. */
+export async function getAccess(): Promise<AccessState> {
+  try {
+    const result = await request<AccessState>('/access')
+    cachedUser = result.user
+    return result
+  } catch {
+    return { user: null, hasAccess: false, isAdmin: false }
+  }
+}
+
+export interface ProgressData {
+  childName: string
+  xp: number
+  streakDays: number
+  lastPlayedOn: string | null
+  completedLevels: string[]
+}
+
+/**
+ * Returns `authenticated: false` when the visitor is signed out so the caller
+ * can keep progress local without treating that as an error.
+ */
+export async function getProgress(): Promise<{
+  authenticated: boolean
+  progress: ProgressData | null
+}> {
+  try {
+    const result = await request<{ progress: ProgressData | null }>('/progress')
+    return { authenticated: true, progress: result.progress }
+  } catch (error) {
+    if (error instanceof ApiError && (error.status === 401 || error.status === 503)) {
+      return { authenticated: false, progress: null }
+    }
+    throw error
+  }
+}
+
+export function saveProgress(progress: ProgressData) {
+  return request<{ progress: ProgressData }>('/progress', {
+    method: 'PUT',
+    body: JSON.stringify(progress),
+  })
+}
+
 export interface Order {
   id: string
   amount_myr: number
@@ -59,6 +141,7 @@ export interface Order {
   status: string
   created_at: string
   parent_id?: string
+  parent_email?: string
 }
 
 export async function submitOrder(file: File, note: string, affiliateCode: string | null) {
@@ -72,7 +155,7 @@ export async function submitOrder(file: File, note: string, affiliateCode: strin
     body: form,
   })
   const body = (await response.json()) as { error?: string }
-  if (!response.ok) throw new Error(body.error ?? 'Gagal menghantar.')
+  if (!response.ok) throw new ApiError(body.error ?? 'Gagal menghantar.', response.status)
 }
 
 export function listOrders() {
@@ -84,4 +167,9 @@ export function decideOrder(id: string, approve: boolean) {
     method: 'PATCH',
     body: JSON.stringify({ status: approve ? 'approved' : 'rejected' }),
   })
+}
+
+/** Same-origin URL that redirects to a short-lived presigned R2 link. */
+export function receiptUrl(orderId: string) {
+  return `/api/admin/orders/${orderId}/proof`
 }

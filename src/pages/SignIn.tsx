@@ -67,7 +67,13 @@ export default function SignIn() {
             </Button>
           </form>
 
-          <p className="mt-4 text-center text-sm text-ink-300">
+          <p className="mt-3 text-center text-sm">
+            <Link to="/lupa" className="font-bold text-brand-600">
+              Lupa kata laluan?
+            </Link>
+          </p>
+
+          <p className="mt-3 text-center text-sm text-ink-300">
             Belum ada akaun?{' '}
             <Link to="/daftar" className="font-bold text-brand-600">
               Daftar

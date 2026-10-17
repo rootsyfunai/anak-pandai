@@ -11,6 +11,8 @@ const Affiliate = lazy(() => import('./pages/Affiliate'))
 const Admin = lazy(() => import('./pages/Admin'))
 const SignUp = lazy(() => import('./pages/SignUp'))
 const SignIn = lazy(() => import('./pages/SignIn'))
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'))
+const ResetPassword = lazy(() => import('./pages/ResetPassword'))
 
 function RouteFallback() {
   return (
@@ -31,6 +33,8 @@ export default function App() {
         <Route path="/daftar" element={<SignUp />} />
         <Route path="/daftar/bayar" element={<Checkout />} />
         <Route path="/masuk" element={<SignIn />} />
+        <Route path="/lupa" element={<ForgotPassword />} />
+        <Route path="/reset" element={<ResetPassword />} />
         <Route path="/affiliate" element={<Affiliate />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="*" element={<Navigate to="/" replace />} />

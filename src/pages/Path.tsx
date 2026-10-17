@@ -1,8 +1,11 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { AccountButton } from '../components/AccountButton'
 import { Button } from '../components/Button'
 import { Logo } from '../components/Logo'
 import { StreakBadge, XpBadge } from '../components/Hud'
+import { TRIAL_LESSONS_PER_SUBJECT } from '../lib/config'
+import { useAccess } from '../lib/useAccess'
 import { AGE_BANDS, AGE_BAND_ORDER, SUBJECTS, type AgeBand, type Subject } from '../data/curriculum'
 import { lessonsFor } from '../data/lessons'
 import { clearedLevelCount, isLessonComplete, levelForXp, levelKey } from '../games/engine'
@@ -10,8 +13,11 @@ import { useProgress } from '../lib/useProgress'
 
 export default function Path() {
   const { progress } = useProgress()
+  const access = useAccess()
   const [band, setBand] = useState<AgeBand>('4-6')
   const [subject, setSubject] = useState<Subject>('bm')
+  // While access is loading, do not flash locks at a paying parent.
+  const onTrial = access.status === 'trial' || access.status === 'anonymous'
 
   const bandMeta = AGE_BANDS[band]
   const lessons = lessonsFor(band, subject)
@@ -31,11 +37,26 @@ export default function Path() {
           <div className="flex items-center gap-2">
             {bandMeta.hasStreaks && <StreakBadge days={progress.streakDays} />}
             <XpBadge xp={progress.xp} />
+            <AccountButton email={access.user?.email ?? null} />
           </div>
         </div>
       </header>
 
       <main className="mx-auto max-w-3xl px-4 py-6">
+        {onTrial && (
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-brand-50 px-4 py-3">
+            <p className="text-sm font-bold text-brand-700">
+              Mod percubaan — pelajaran pertama setiap subjek percuma.
+            </p>
+            <Link
+              to={access.user ? '/daftar/bayar' : '/daftar'}
+              className="text-sm font-black text-brand-700 underline"
+            >
+              Buka akses penuh · RM50
+            </Link>
+          </div>
+        )}
+
         <div className="card-3d mb-6">
           <div className="flex items-center justify-between">
             <div>
@@ -114,6 +135,7 @@ export default function Path() {
                 const cleared = clearedLevelCount(lesson, progress.completedLevels)
                 const done = cleared === lesson.levels.length
                 const locked = i > 0 && !isLessonComplete(lessons[i - 1], progress.completedLevels)
+                const trialLocked = onTrial && i >= TRIAL_LESSONS_PER_SUBJECT
                 // Resume at the first level that is not yet cleared.
                 const nextLevel = lesson.levels.find(
                   (l) => !progress.completedLevels.includes(levelKey(lesson.id, l.index)),
@@ -129,9 +151,9 @@ export default function Path() {
                             : 'bg-brand-600 text-white'
                       }`}
                     >
-                      {done ? '✓' : locked ? '🔒' : i + 1}
+                      {done ? '✓' : locked || trialLocked ? '🔒' : i + 1}
                     </span>
-                    <div className={`card-3d ${locked ? 'opacity-60' : ''}`}>
+                    <div className={`card-3d ${locked || trialLocked ? 'opacity-60' : ''}`}>
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="font-black text-ink-900">{lesson.title}</p>
@@ -168,7 +190,11 @@ export default function Path() {
                             </span>
                           </div>
                         </div>
-                        {locked ? (
+                        {trialLocked ? (
+                          <Link to={access.user ? '/daftar/bayar' : '/daftar'} className="shrink-0">
+                            <Button className="px-4 py-2 text-sm">Buka</Button>
+                          </Link>
+                        ) : locked ? (
                           <Button variant="neutral" disabled className="shrink-0 px-4 py-2 text-sm">
                             Kunci
                           </Button>
