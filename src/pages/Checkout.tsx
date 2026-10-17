@@ -4,7 +4,7 @@ import { Button } from '../components/Button'
 import { Logo } from '../components/Logo'
 import { PAYMENT, PRICE_MYR, formatMYR } from '../lib/config'
 import { getStoredRef } from '../lib/affiliate'
-import { isSupabaseConfigured, loadSupabase } from '../lib/supabase'
+import { submitOrder } from '../lib/api'
 
 type Step = 'pay' | 'upload' | 'done'
 
@@ -24,61 +24,8 @@ export default function Checkout() {
     setBusy(true)
     setError(null)
 
-    if (!isSupabaseConfigured) {
-      // Local-only mode: record the submission so the flow is testable
-      // before a Supabase project exists.
-      const pending = JSON.parse(localStorage.getItem('ap_pending_orders') ?? '[]')
-      pending.push({
-        id: crypto.randomUUID(),
-        amount_myr: PRICE_MYR,
-        affiliate_code: ref?.code ?? null,
-        reference_note: note,
-        file_name: file.name,
-        status: 'pending',
-        created_at: new Date().toISOString(),
-      })
-      localStorage.setItem('ap_pending_orders', JSON.stringify(pending))
-      setBusy(false)
-      setStep('done')
-      return
-    }
-
     try {
-      const supabase = await loadSupabase()
-      const { data: userData } = await supabase.auth.getUser()
-      const user = userData.user
-      if (!user) {
-        setError('Sila daftar atau masuk terlebih dahulu.')
-        setBusy(false)
-        return
-      }
-
-      const path = `${user.id}/${crypto.randomUUID()}-${file.name}`
-      const { error: uploadError } = await supabase.storage
-        .from('payment-proofs')
-        .upload(path, file)
-      if (uploadError) throw uploadError
-
-      let affiliateId: string | null = null
-      if (ref?.code) {
-        const { data } = await supabase
-          .from('affiliates')
-          .select('id')
-          .ilike('code', ref.code)
-          .maybeSingle()
-        affiliateId = data?.id ?? null
-      }
-
-      const { error: insertError } = await supabase.from('orders').insert({
-        parent_id: user.id,
-        amount_myr: PRICE_MYR,
-        proof_path: path,
-        reference_note: note,
-        affiliate_id: affiliateId,
-        affiliate_code: ref?.code ?? null,
-      })
-      if (insertError) throw insertError
-
+      await submitOrder(file, note, ref?.code ?? null)
       setStep('done')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Gagal menghantar. Cuba lagi.')

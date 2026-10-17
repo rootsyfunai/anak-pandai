@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '../components/Button'
 import { Logo } from '../components/Logo'
-import { isSupabaseConfigured, loadSupabase } from '../lib/supabase'
+import { signUp } from '../lib/api'
 
 export default function SignUp() {
   const navigate = useNavigate()
@@ -17,24 +17,14 @@ export default function SignUp() {
     setBusy(true)
     setError(null)
 
-    if (!isSupabaseConfigured) {
-      // Local-only mode: go straight to checkout so the flow is walkable.
+    try {
+      await signUp(email, password, name)
       navigate('/daftar/bayar')
-      return
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gagal mendaftar.')
+    } finally {
+      setBusy(false)
     }
-
-    const supabase = await loadSupabase()
-    const { error: err } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { full_name: name } },
-    })
-    setBusy(false)
-    if (err) {
-      setError(err.message)
-      return
-    }
-    navigate('/daftar/bayar')
   }
 
   return (
@@ -52,12 +42,6 @@ export default function SignUp() {
           <p className="mt-1 text-sm text-ink-500">
             Satu akaun untuk semua anak anda. Bayaran sekali sahaja.
           </p>
-
-          {!isSupabaseConfigured && (
-            <p className="mt-4 rounded-xl bg-amber-100 px-3 py-2 text-xs font-bold text-amber-800">
-              Mod demo — Supabase belum disambung. Daftar akan terus ke pembayaran.
-            </p>
-          )}
 
           <form onSubmit={submit} className="mt-5 space-y-4">
             <Field label="Nama penuh" value={name} onChange={setName} required />

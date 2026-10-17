@@ -44,8 +44,9 @@ function load(): Progress {
 }
 
 /**
- * Local progress store. Keeps the app usable before Supabase is wired up;
- * the same shape is written to `game_results` once auth is in place.
+ * Local progress store. The game loop remains playable offline; authenticated
+ * result syncing can be added through the Railway API without coupling the
+ * game engine to the database.
  */
 export function useProgress() {
   const [progress, setProgress] = useState<Progress>(load)

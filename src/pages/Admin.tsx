@@ -1,82 +1,42 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '../components/Button'
 import { Logo } from '../components/Logo'
 import { formatMYR } from '../lib/config'
-import { isSupabaseConfigured, loadSupabase } from '../lib/supabase'
+import { decideOrder, listOrders, type Order } from '../lib/api'
 
-interface PendingOrder {
-  id: string
-  amount_myr: number
-  affiliate_code: string | null
-  reference_note: string
-  file_name?: string
-  proof_path?: string
-  status: string
-  created_at: string
-}
+type PendingOrder = Order
 
 export default function Admin() {
   const [orders, setOrders] = useState<PendingOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    void load()
-  }, [])
-
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true)
     setError(null)
 
-    if (!isSupabaseConfigured) {
-      const local = JSON.parse(localStorage.getItem('ap_pending_orders') ?? '[]') as PendingOrder[]
-      setOrders(local)
+    try {
+      const result = await listOrders()
+      setOrders(result.orders)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gagal memuatkan pesanan.')
+    } finally {
       setLoading(false)
-      return
     }
+  }, [])
 
-    const supabase = await loadSupabase()
-    const { data, error: err } = await supabase
-      .from('orders')
-      .select('*')
-      .order('created_at', { ascending: false })
-    if (err) setError(err.message)
-    else setOrders((data ?? []) as PendingOrder[])
-    setLoading(false)
-  }
+  useEffect(() => {
+    void load()
+  }, [load])
 
   async function decide(order: PendingOrder, approve: boolean) {
-    if (!isSupabaseConfigured) {
-      const local = JSON.parse(localStorage.getItem('ap_pending_orders') ?? '[]') as PendingOrder[]
-      const next = local.map((o) =>
-        o.id === order.id ? { ...o, status: approve ? 'approved' : 'rejected' } : o,
-      )
-      localStorage.setItem('ap_pending_orders', JSON.stringify(next))
-      setOrders(next)
-      return
+    try {
+      await decideOrder(order.id, approve)
+      await load()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gagal mengemas kini pesanan.')
     }
-
-    const supabase = await loadSupabase()
-    const { error: err } = await supabase
-      .from('orders')
-      .update({
-        status: approve ? 'approved' : 'rejected',
-        reviewed_at: new Date().toISOString(),
-      })
-      .eq('id', order.id)
-    if (err) {
-      setError(err.message)
-      return
-    }
-
-    if (approve) {
-      await supabase.from('entitlements').insert({
-        parent_id: (order as PendingOrder & { parent_id: string }).parent_id,
-        order_id: order.id,
-      })
-    }
-    await load()
   }
 
   const pending = orders.filter((o) => o.status === 'pending')
@@ -96,12 +56,6 @@ export default function Admin() {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-6">
-        {!isSupabaseConfigured && (
-          <p className="mb-4 rounded-xl bg-amber-100 px-4 py-3 text-sm font-bold text-amber-800">
-            Mod tempatan — Supabase belum dikonfigurasi. Pesanan disimpan dalam pelayar sahaja.
-          </p>
-        )}
-
         <div className="mb-6 grid gap-4 sm:grid-cols-3">
           <Stat label="Menunggu semakan" value={pending.length} />
           <Stat label="Jumlah pesanan" value={orders.length} />

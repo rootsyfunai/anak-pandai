@@ -39,25 +39,31 @@ npm install
 npm run dev
 ```
 
-App berjalan dalam **mod demo tempatan** tanpa Supabase — kemajuan disimpan dalam
+App berjalan dalam **mod demo tempatan** tanpa Railway Postgres — kemajuan disimpan dalam
 `localStorage` dan pesanan disimpan dalam pelayar. Ini membolehkan anda cuba keseluruhan
 aliran sebelum menyediakan backend.
 
-## Sambung Supabase
+## Sambung Railway Postgres
 
-1. Cipta projek di [supabase.com](https://supabase.com)
-2. Jalankan migrasi: `supabase/migrations/0001_init.sql`
-3. Salin `.env.example` ke `.env.local` dan isi:
+App menggunakan Railway Postgres melalui API same-origin dalam `server.mjs`.
+Connection string tidak pernah dihantar ke pelayar.
+
+1. Tambah servis **Postgres** pada projek Railway.
+2. Jalankan `db/migrations/0001_init.sql` pada database itu.
+3. Tetapkan `DATABASE_URL` pada servis app.
+4. Untuk resit pembayaran, sediakan bucket Cloudflare R2 dan tetapkan:
 
 ```
-VITE_SUPABASE_URL=https://xxxx.supabase.co
-VITE_SUPABASE_ANON_KEY=xxxx
+R2_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
+R2_ACCESS_KEY_ID=...
+R2_SECRET_ACCESS_KEY=...
+R2_BUCKET=payment-proofs
 ```
 
-4. Tandakan akaun anda sebagai admin:
+5. Tandakan akaun anda sebagai admin:
 
 ```sql
-update public.profiles set is_admin = true where email = 'anda@email.com';
+update profiles set is_admin = true where email = 'anda@email.com';
 ```
 
 ## Imej (Cloudflare CDN)
@@ -123,8 +129,8 @@ dibina supaya bil kekal rendah tanpa mengorbankan kualiti permainan.
    tiada proses Node yang memegang memori terbuka.
 3. **Bundle klien mesti kecil.** Setiap KB dimuat turun oleh setiap pelawat.
    - Route dipecah dengan `React.lazy` — lihat `src/App.tsx`.
-   - `@supabase/supabase-js` (214 KB) dimuat secara dinamik melalui
-     `loadSupabase()` dan **tidak** berada dalam muatan awal.
+   - Pakej Postgres, auth dan R2 hanya digunakan oleh `server.mjs`, bukan
+     bundle pelayar.
    - Selepas tambah sebarang pakej, semak saiz bundle.
 4. **Cache agresif.** Fail ber-hash di-cache 1 tahun (`immutable`); HTML sentiasa
    divalidasi semula. Ini lever terbesar untuk egress — aset yang di-cache
@@ -140,7 +146,7 @@ dibina supaya bil kekal rendah tanpa mengorbankan kualiti permainan.
 | `index-*.js` | 23 KB | 8 KB |
 | `index-*.css` | 27 KB | 6 KB |
 
-Landing page memuatkan **4 fail sahaja**. Supabase, Admin, Checkout dan Play
+Landing page memuatkan **4 fail sahaja**. API, Admin, Checkout dan Play
 dimuatkan hanya apabila dilawati. Dengan Brotli, `react-*.js` turun dari 258 KB
 ke 72 KB.
 
@@ -160,7 +166,7 @@ ia adalah produknya. Optimumkan *penghantaran*, bukan *pengalaman*.
 - [ ] Tambah halaman dasar privasi dan terma (keperluan PDPA)
 - [ ] Sediakan proses pembayaran komisen affiliate
 - [ ] Tambah lebih banyak pelajaran — 19 pelajaran adalah asas, bukan lengkap
-- [ ] Sediakan projek Supabase, jalankan migrasi, dan tetapkan `is_admin = true`
+- [ ] Sediakan Railway Postgres, jalankan migrasi, dan tetapkan `is_admin = true`
 
 ## Struktur
 
@@ -169,13 +175,13 @@ src/
   components/   UI kongsi (Button, CdnImage, Hud, Logo)
   data/         Sukatan dan kandungan pelajaran
   games/        Enjin permainan (XP, nyawa, streak, bintang)
-  lib/          Supabase, affiliate, config, progress, speech, pwa
+  lib/          API Railway, affiliate, config, progress, speech, pwa
   pages/        Landing, Path, Play, Checkout, Affiliate, Admin, SignUp, SignIn
 public/
   sw.js         Service worker (offline + caching)
   offline.html  Halaman fallback tanpa rangkaian
 scripts/
   make-icons.mjs  Penjana ikon PWA (jalankan semula jika warna jenama berubah)
-supabase/
-  migrations/   Skema pangkalan data dan polisi RLS
+db/
+  migrations/   Skema pangkalan data Railway Postgres
 ```

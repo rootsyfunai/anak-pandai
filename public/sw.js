@@ -9,7 +9,7 @@
  *                    and the cached shell is only a fallback for offline.
  *   - Hashed assets → cache-first. Vite content-hashes these, so a cached
  *                    copy can never be stale; a changed file is a new URL.
- *   - Supabase API → never cached. Auth tokens and order data must not be
+ *   - Railway API → never cached. Auth tokens and order data must not be
  *                    written to disk, and a cached API response would show
  *                    one parent another parent's data.
  *
@@ -88,7 +88,7 @@ function isStaticChrome(url) {
 self.addEventListener('fetch', (event) => {
   const { request } = event
 
-  // Only GET is cacheable, and cross-origin requests (Supabase, YouTube,
+  // Only GET is cacheable, and cross-origin requests (Railway API, YouTube,
   // Cloudflare images) are left entirely to the browser.
   if (request.method !== 'GET') return
 
