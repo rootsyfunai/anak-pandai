@@ -40,6 +40,12 @@ export const PAYMENT = {
   ],
 } as const
 
+/**
+ * Lessons available per subject before payment. This is the trial boundary:
+ * enough to prove the games work, not enough to replace the product.
+ */
+export const TRIAL_LESSONS_PER_SUBJECT = 1
+
 export function formatMYR(amount: number): string {
   return `RM${amount.toFixed(2)}`
 }

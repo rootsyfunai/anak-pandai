@@ -68,8 +68,10 @@ Optimize the *delivery* (CDN, caching, lazy-loading), not the *experience*.
 
 | Variable | Purpose |
 | --- | --- |
-| `VITE_SUPABASE_URL` | Supabase project URL. Unset ⇒ app runs in local demo mode. |
-| `VITE_SUPABASE_ANON_KEY` | Supabase anon key. |
+| `DATABASE_URL` | Private Railway Postgres connection string. |
+| `R2_ENDPOINT` | Cloudflare R2 S3-compatible endpoint for payment receipts. |
+| `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` | Private R2 credentials. |
+| `R2_BUCKET` | Private R2 bucket name for payment receipts. |
 | `VITE_IMAGE_CDN` | Cloudflare image base URL, no trailing slash. Unset ⇒ `<CdnImage>` renders its CSS fallback. |
 
 ---
@@ -107,7 +109,7 @@ These are deliberately fake and must not ship as-is:
 
 ## Code conventions
 
-- React + Vite + TypeScript + Tailwind v4 + Supabase.
+- React + Vite + TypeScript + Tailwind v4 + Railway Postgres API.
 - Tailwind v4 uses `@import 'tailwindcss'` and `@theme` — there is no
   `tailwind.config.js`.
 - `defineConfig` in `vite.config.ts` must be imported from `vitest/config`,

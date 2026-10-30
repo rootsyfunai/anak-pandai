@@ -1,82 +1,57 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { AccountButton } from '../components/AccountButton'
 import { Button } from '../components/Button'
 import { Logo } from '../components/Logo'
 import { formatMYR } from '../lib/config'
-import { isSupabaseConfigured, loadSupabase } from '../lib/supabase'
+import { decideOrder, listOrders, receiptUrl, type Order } from '../lib/api'
 
-interface PendingOrder {
-  id: string
-  amount_myr: number
-  affiliate_code: string | null
-  reference_note: string
-  file_name?: string
-  proof_path?: string
-  status: string
-  created_at: string
-}
+type PendingOrder = Order
 
 export default function Admin() {
   const [orders, setOrders] = useState<PendingOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    void load()
+  const load = useCallback(async () => {
+    try {
+      const result = await listOrders()
+      setOrders(result.orders)
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gagal memuatkan pesanan.')
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
-  async function load() {
-    setLoading(true)
-    setError(null)
-
-    if (!isSupabaseConfigured) {
-      const local = JSON.parse(localStorage.getItem('ap_pending_orders') ?? '[]') as PendingOrder[]
-      setOrders(local)
-      setLoading(false)
-      return
+  useEffect(() => {
+    let cancelled = false
+    listOrders()
+      .then((result) => {
+        if (cancelled) return
+        setOrders(result.orders)
+        setError(null)
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return
+        setError(err instanceof Error ? err.message : 'Gagal memuatkan pesanan.')
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
     }
-
-    const supabase = await loadSupabase()
-    const { data, error: err } = await supabase
-      .from('orders')
-      .select('*')
-      .order('created_at', { ascending: false })
-    if (err) setError(err.message)
-    else setOrders((data ?? []) as PendingOrder[])
-    setLoading(false)
-  }
+  }, [])
 
   async function decide(order: PendingOrder, approve: boolean) {
-    if (!isSupabaseConfigured) {
-      const local = JSON.parse(localStorage.getItem('ap_pending_orders') ?? '[]') as PendingOrder[]
-      const next = local.map((o) =>
-        o.id === order.id ? { ...o, status: approve ? 'approved' : 'rejected' } : o,
-      )
-      localStorage.setItem('ap_pending_orders', JSON.stringify(next))
-      setOrders(next)
-      return
+    try {
+      await decideOrder(order.id, approve)
+      await load()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gagal mengemas kini pesanan.')
     }
-
-    const supabase = await loadSupabase()
-    const { error: err } = await supabase
-      .from('orders')
-      .update({
-        status: approve ? 'approved' : 'rejected',
-        reviewed_at: new Date().toISOString(),
-      })
-      .eq('id', order.id)
-    if (err) {
-      setError(err.message)
-      return
-    }
-
-    if (approve) {
-      await supabase.from('entitlements').insert({
-        parent_id: (order as PendingOrder & { parent_id: string }).parent_id,
-        order_id: order.id,
-      })
-    }
-    await load()
   }
 
   const pending = orders.filter((o) => o.status === 'pending')
@@ -89,19 +64,16 @@ export default function Admin() {
       <header className="border-b-2 border-cream-200 bg-white">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-4">
           <Logo />
-          <span className="rounded-full bg-ink-900 px-3 py-1 text-sm font-extrabold text-white">
-            Admin
-          </span>
+          <div className="flex items-center gap-4">
+            <span className="rounded-full bg-ink-900 px-3 py-1 text-sm font-extrabold text-white">
+              Admin
+            </span>
+            <AccountButton email={null} signedIn />
+          </div>
         </div>
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-6">
-        {!isSupabaseConfigured && (
-          <p className="mb-4 rounded-xl bg-amber-100 px-4 py-3 text-sm font-bold text-amber-800">
-            Mod tempatan — Supabase belum dikonfigurasi. Pesanan disimpan dalam pelayar sahaja.
-          </p>
-        )}
-
         <div className="mb-6 grid gap-4 sm:grid-cols-3">
           <Stat label="Menunggu semakan" value={pending.length} />
           <Stat label="Jumlah pesanan" value={orders.length} />
@@ -129,6 +101,9 @@ export default function Admin() {
                     <p className="text-sm text-ink-300">
                       {new Date(o.created_at).toLocaleString('ms-MY')}
                     </p>
+                    {o.parent_email && (
+                      <p className="text-sm font-bold text-ink-700">{o.parent_email}</p>
+                    )}
                     {o.affiliate_code && (
                       <p className="mt-1 text-sm font-bold text-brand-600">
                         Kod affiliate: {o.affiliate_code}
@@ -138,7 +113,14 @@ export default function Admin() {
                       <p className="mt-1 text-sm text-ink-500">Nota: {o.reference_note}</p>
                     )}
                     {o.proof_path && (
-                      <p className="mt-1 text-xs text-ink-300">Resit: {o.proof_path}</p>
+                      <a
+                        href={receiptUrl(o.id)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-2 inline-block text-sm font-black text-brand-600 underline"
+                      >
+                        Lihat resit ↗
+                      </a>
                     )}
                   </div>
                   <div className="flex items-center gap-2">

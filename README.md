@@ -39,49 +39,23 @@ npm install
 npm run dev
 ```
 
-App berjalan dalam **mod demo tempatan** tanpa Supabase — kemajuan disimpan dalam
+App berjalan dalam **mod demo tempatan** tanpa Railway Postgres — kemajuan disimpan dalam
 `localStorage` dan pesanan disimpan dalam pelayar. Ini membolehkan anda cuba keseluruhan
 aliran sebelum menyediakan backend.
 
-## Sambung Supabase
+Untuk Postgres, R2, CDN imej dan deployment, lihat
+[docs/deployment.md](docs/deployment.md).
 
-1. Cipta projek di [supabase.com](https://supabase.com)
-2. Jalankan migrasi: `supabase/migrations/0001_init.sql`
-3. Salin `.env.example` ke `.env.local` dan isi:
+## Skrip
 
-```
-VITE_SUPABASE_URL=https://xxxx.supabase.co
-VITE_SUPABASE_ANON_KEY=xxxx
-```
-
-4. Tandakan akaun anda sebagai admin:
-
-```sql
-update public.profiles set is_admin = true where email = 'anda@email.com';
-```
-
-## Imej (Cloudflare CDN)
-
-**Jangan sekali-kali serve imej dari Railway** — egress akan membengkak kos.
-Semua imej mesti datang dari Cloudflare.
-
-1. Muat naik imej ke Cloudflare R2 atau Images.
-2. Tetapkan `VITE_IMAGE_CDN` kepada URL asas CDN (tanpa `/` di hujung):
-
-```
-VITE_IMAGE_CDN=https://imej.anakpandai.my
-```
-
-3. Guna komponen `<CdnImage path="hero/keluarga.jpg" alt="..." />`. Ia membaca
-   `VITE_IMAGE_CDN` dan memaparkan fallback CSS jika CDN belum diset, jadi
-   pembangunan tempatan tetap berfungsi tanpa internet.
-
-Imej yang perlu dimuat naik:
-
-| Path CDN | Guna |
-| --- | --- |
-| `hero/keluarga-belajar.jpg` | Latar hero di halaman utama |
-| `testimonials/*.jpg` | Gambar ibu bapa (lihat nota di bawah) |
+| Arahan | Fungsi |
+|---|---|
+| `npm run dev` | Pelayan pembangunan |
+| `npm run build` | Semak jenis + bina untuk produksi |
+| `npm run start` | Hidangkan `dist/` (produksi, untuk Railway) |
+| `npm run test` | Jalankan ujian unit |
+| `npm run lint` | Jalankan oxlint |
+| `npm run db:migrate` | Jalankan migrasi Postgres |
 
 ## Aliran affiliate
 
@@ -98,84 +72,22 @@ Imej yang perlu dimuat naik:
 4. Admin semak di `/admin` dan luluskan
 5. Entitlement dicipta secara automatik — akses penuh dibuka
 
-## Skrip
-
-| Arahan | Fungsi |
-|---|---|
-| `npm run dev` | Pelayan pembangunan |
-| `npm run build` | Semak jenis + bina untuk produksi |
-| `npm run start` | Hidangkan `dist/` (produksi, untuk Railway) |
-| `npm run test` | Jalankan ujian unit |
-| `npm run lint` | Jalankan oxlint |
-
-## Kos hosting (Railway)
-
-Railway mengenakan bayaran untuk masa komputasi, memori dan **egress**. App ini
-dibina supaya bil kekal rendah tanpa mengorbankan kualiti permainan.
-
-**Peraturan utama:**
-
-1. **Jangan sekali-kali hidangkan imej atau video dari Railway.**
-   - Imej → **Cloudflare** (R2 atau Images). Sentiasa guna URL CDN.
-   - Video → **YouTube** sahaja.
-   - `public/` hanya untuk UI kecil (logo, favicon, QR).
-2. **App ini SPA statik.** `server.mjs` hanya menghidangkan fail siap bina —
-   tiada proses Node yang memegang memori terbuka.
-3. **Bundle klien mesti kecil.** Setiap KB dimuat turun oleh setiap pelawat.
-   - Route dipecah dengan `React.lazy` — lihat `src/App.tsx`.
-   - `@supabase/supabase-js` (214 KB) dimuat secara dinamik melalui
-     `loadSupabase()` dan **tidak** berada dalam muatan awal.
-   - Selepas tambah sebarang pakej, semak saiz bundle.
-4. **Cache agresif.** Fail ber-hash di-cache 1 tahun (`immutable`); HTML sentiasa
-   divalidasi semula. Ini lever terbesar untuk egress — aset yang di-cache
-   adalah percuma untuk dihidangkan semula.
-5. **Jangan poll backend.** Tiada `setInterval` yang fetch. Pengguna idle
-   sepatutnya kos ~sifar.
-
-**Saiz muatan awal (landing page):**
-
-| Fail | Saiz | Gzip |
-|---|---|---|
-| `react-*.js` | 258 KB | 82 KB |
-| `index-*.js` | 23 KB | 8 KB |
-| `index-*.css` | 27 KB | 6 KB |
-
-Landing page memuatkan **4 fail sahaja**. Supabase, Admin, Checkout dan Play
-dimuatkan hanya apabila dilawati. Dengan Brotli, `react-*.js` turun dari 258 KB
-ke 72 KB.
-
-**Apa yang TIDAK boleh dikorbankan:** animasi maklum balas (betul/salah/
-sambutan), imej, bunyi dan pertuturan. Kanak-kanak perlukan maklum balas itu —
-ia adalah produknya. Optimumkan *penghantaran*, bukan *pengalaman*.
-
-## Sebelum pelancaran
-
-- [ ] Gantikan `public/qr-payment.svg` dengan kod QR DuitNow sebenar
-- [ ] Kemas kini `PAYMENT` dalam `src/lib/config.ts` dengan nama akaun sebenar
-- [ ] Muat naik imej ke Cloudflare dan tetapkan `VITE_IMAGE_CDN`
-- [ ] **Gantikan testimoni palsu** dalam `TESTIMONIALS` (`src/pages/Landing.tsx`)
-      dengan petikan sebenar, atau buang seksyen itu. Testimoni yang direka
-      adalah risiko misrepresentasi di bawah undang-undang perlindungan
-      pengguna Malaysia.
-- [ ] Tambah halaman dasar privasi dan terma (keperluan PDPA)
-- [ ] Sediakan proses pembayaran komisen affiliate
-- [ ] Tambah lebih banyak pelajaran — 19 pelajaran adalah asas, bukan lengkap
-- [ ] Sediakan projek Supabase, jalankan migrasi, dan tetapkan `is_admin = true`
-
 ## Struktur
 
 ```
-src/
-  components/   UI kongsi (Button, CdnImage, Hud, Logo)
-  data/         Sukatan dan kandungan pelajaran
-  games/        Enjin permainan (XP, nyawa, streak, bintang)
-  lib/          Supabase, affiliate, config, progress, speech, pwa
-  pages/        Landing, Path, Play, Checkout, Affiliate, Admin, SignUp, SignIn
-public/
-  sw.js         Service worker (offline + caching)
-  offline.html  Halaman fallback tanpa rangkaian
-scripts/
-  make-icons.mjs  Penjana ikon PWA (jalankan semula jika warna jenama berubah)
-supabase/
-  migrations/   Skema pangkalan data dan polisi RLS
+index.html        Titik masuk Vite
+vite.config.ts    Plugin React/Tailwind, chunk vendor, konfigurasi Vitest
+nixpacks.toml     Fasa install/build/start Railway
+railway.json      Tetapan deploy Railway
+db/               Migrasi Postgres dan pelari migrasi
+docs/             Deployment, seni bina dan nota operasi
+public/           Chrome UI sahaja (ikon, manifest, service worker, QR)
+scripts/          Penjana ikon PWA
+server/           API same-origin, Postgres, R2, e-mel, sesi
+src/              App React (components, data, games, lib, pages)
 ```
+
+Dokumentasi lanjut:
+
+- [docs/deployment.md](docs/deployment.md) — env vars, Postgres, R2, CDN imej, senarai semak pelancaran
+- [docs/architecture.md](docs/architecture.md) — peraturan kos hosting Railway dan bajet bundle

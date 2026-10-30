@@ -11,7 +11,9 @@ import {
   TraceBoard,
 } from '../components/QuestionBoards'
 import { SCHOOL_YEARS } from '../data/curriculum'
-import { lessonById, type Question } from '../data/lessons'
+import { lessonById, lessonsForYear, type Question } from '../data/lessons'
+import { TRIAL_LESSONS_PER_SUBJECT } from '../lib/config'
+import { useAccess } from '../lib/useAccess'
 import {
   accuracy,
   advance,
@@ -34,6 +36,12 @@ export default function Play() {
   const navigate = useNavigate()
   const lesson = lessonById(lessonId)
   const { progress, completeLevel } = useProgress()
+  const access = useAccess()
+  const onTrial = access.status === 'trial' || access.status === 'anonymous'
+  const lessonIndex = lesson
+    ? lessonsForYear(lesson.year, lesson.subject).findIndex((l) => l.id === lesson.id)
+    : -1
+  const trialBlocked = onTrial && lessonIndex >= TRIAL_LESSONS_PER_SUBJECT
 
   const requestedLevel = Number.parseInt(levelIndex, 10) || 1
   const yearMeta = SCHOOL_YEARS[lesson?.year ?? 'tahun1']
@@ -120,6 +128,10 @@ export default function Play() {
         </Link>
       </div>
     )
+  }
+
+  if (trialBlocked) {
+    return <Paywall lessonTitle={lesson.title} signedIn={access.status === 'trial'} />
   }
 
   if (!unlocked) {
@@ -449,6 +461,27 @@ function Stat({ label, value }: { label: string; value: string | number }) {
     <div className="card-3d">
       <p className="text-xs font-extrabold uppercase tracking-wide text-ink-300">{label}</p>
       <p className="text-xl font-black text-ink-900">{value}</p>
+    </div>
+  )
+}
+
+function Paywall({ lessonTitle, signedIn }: { lessonTitle: string; signedIn: boolean }) {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center gap-5 bg-gradient-to-b from-brand-50 to-white p-6 text-center">
+      <span className="text-6xl">🔒</span>
+      <h1 className="text-2xl font-black text-ink-900">{lessonTitle}</h1>
+      <p className="max-w-sm text-ink-500">
+        Mod percubaan hanya membuka pelajaran pertama setiap subjek. Buka akses penuh
+        untuk semua pelajaran — sekali bayar RM50.
+      </p>
+      <Link to={signedIn ? '/daftar/bayar' : '/daftar'}>
+        <Button className="px-8 py-4 text-lg">
+          {signedIn ? 'Buka Akses Penuh' : 'Daftar & Bayar'}
+        </Button>
+      </Link>
+      <Link to="/main" className="text-sm font-bold text-ink-300 hover:text-brand-700">
+        Kembali ke laluan
+      </Link>
     </div>
   )
 }

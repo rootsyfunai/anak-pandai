@@ -27,5 +27,5 @@ dependsOn = ["install"]
 variables = { NODE_ENV = "development" }
 
 [start]
-cmd = "node server.mjs"
+cmd = "node server/index.mjs"
 variables = { NODE_ENV = "production" }

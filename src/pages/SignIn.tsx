@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '../components/Button'
 import { Logo } from '../components/Logo'
-import { isSupabaseConfigured, loadSupabase } from '../lib/supabase'
+import { signIn } from '../lib/api'
 
 export default function SignIn() {
   const navigate = useNavigate()
@@ -16,19 +16,14 @@ export default function SignIn() {
     setBusy(true)
     setError(null)
 
-    if (!isSupabaseConfigured) {
+    try {
+      await signIn(email, password)
       navigate('/main')
-      return
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gagal masuk.')
+    } finally {
+      setBusy(false)
     }
-
-    const supabase = await loadSupabase()
-    const { error: err } = await supabase.auth.signInWithPassword({ email, password })
-    setBusy(false)
-    if (err) {
-      setError(err.message)
-      return
-    }
-    navigate('/main')
   }
 
   return (
@@ -72,7 +67,13 @@ export default function SignIn() {
             </Button>
           </form>
 
-          <p className="mt-4 text-center text-sm text-ink-300">
+          <p className="mt-3 text-center text-sm">
+            <Link to="/lupa" className="font-bold text-brand-600">
+              Lupa kata laluan?
+            </Link>
+          </p>
+
+          <p className="mt-3 text-center text-sm text-ink-300">
             Belum ada akaun?{' '}
             <Link to="/daftar" className="font-bold text-brand-600">
               Daftar

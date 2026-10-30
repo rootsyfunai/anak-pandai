@@ -1,14 +1,12 @@
 /**
- * Minimal static file server for Railway.
+ * Railway entry point.
  *
- * Why not `serve` or `http-server`: both pull in a dependency tree that
- * includes a vulnerable `compression` version, and neither is needed. This
- * app serves pre-built static files with no runtime logic, so a ~100 line
- * server with zero dependencies is smaller, faster to boot, and has no
- * supply-chain surface.
+ * One process serves the built SPA and the JSON API. Nothing here holds a
+ * database connection open per request beyond the pg pool, and the process
+ * does no work while idle.
  *
- * Caching is the point here. Railway bills for egress, and a cached asset
- * costs nothing to re-serve, so hashed assets get a one-year immutable
+ * Caching is the point of the static half: Railway bills egress, and a cached
+ * asset costs nothing to re-serve, so hashed assets get a one-year immutable
  * cache while the HTML shell is always revalidated.
  */
 import { createServer } from 'node:http'
@@ -16,6 +14,7 @@ import { createReadStream } from 'node:fs'
 import { stat } from 'node:fs/promises'
 import { extname, join, normalize, resolve } from 'node:path'
 import { createGzip, createBrotliCompress, constants } from 'node:zlib'
+import { handleApi } from './api.mjs'
 
 const DIST = resolve(process.cwd(), 'dist')
 const PORT = Number(process.env.PORT) || 3000
@@ -70,6 +69,11 @@ async function resolveFile(pathname) {
 const server = createServer(async (req, res) => {
   const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`)
   let pathname = decodeURIComponent(url.pathname)
+
+  if (pathname.startsWith('/api/')) {
+    await handleApi(req, res, pathname)
+    return
+  }
 
   let found = await resolveFile(pathname)
 
@@ -132,5 +136,5 @@ const server = createServer(async (req, res) => {
 })
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Anak Pandai serving dist/ on port ${PORT}`)
+  console.log(`Anak Pandai serving dist/ and /api on port ${PORT}`)
 })
