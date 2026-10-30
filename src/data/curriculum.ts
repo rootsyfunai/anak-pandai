@@ -150,6 +150,54 @@ export const SCHOOL_YEAR_ORDER: SchoolYear[] = [
   'tahun6',
 ]
 
+/**
+ * A tahap groups the school years that share a curriculum framework. The
+ * path page shows these as the top level, with the individual years nested
+ * inside, so Tahun 1 is never mixed with Tahun 2.
+ */
+export type Tahap = 'awal' | 'prasekolah' | 'tahap1' | 'tahap2'
+
+export interface TahapMeta {
+  id: Tahap
+  label: string
+  framework: string
+  years: SchoolYear[]
+}
+
+export const TAHAP: Record<Tahap, TahapMeta> = {
+  awal: {
+    id: 'awal',
+    label: '1-3 tahun',
+    framework: 'Pembelajaran awal (bukan formal)',
+    years: ['baby'],
+  },
+  prasekolah: {
+    id: 'prasekolah',
+    label: 'Prasekolah',
+    framework: 'KSPK Prasekolah',
+    years: ['prasekolah'],
+  },
+  tahap1: {
+    id: 'tahap1',
+    label: 'KSSR Tahap 1',
+    framework: 'Tahun 1 hingga Tahun 3',
+    years: ['tahun1', 'tahun2', 'tahun3'],
+  },
+  tahap2: {
+    id: 'tahap2',
+    label: 'KSSR Tahap 2',
+    framework: 'Tahun 4 hingga Tahun 6',
+    years: ['tahun4', 'tahun5', 'tahun6'],
+  },
+}
+
+export const TAHAP_ORDER: Tahap[] = ['awal', 'prasekolah', 'tahap1', 'tahap2']
+
+/** The tahap a school year belongs to. */
+export function tahapForYear(year: SchoolYear): Tahap {
+  return TAHAP_ORDER.find((t) => TAHAP[t].years.includes(year)) ?? 'tahap1'
+}
+
 /** Derive the school year from a birth year, using the current calendar year. */
 export function schoolYearForBirthYear(birthYear: number, now = new Date()): SchoolYear {
   const age = now.getFullYear() - birthYear

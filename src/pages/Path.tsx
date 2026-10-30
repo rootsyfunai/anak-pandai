@@ -8,10 +8,12 @@ import { TRIAL_LESSONS_PER_SUBJECT } from '../lib/config'
 import { useAccess } from '../lib/useAccess'
 import {
   SCHOOL_YEARS,
-  SCHOOL_YEAR_ORDER,
   SUBJECTS,
+  TAHAP,
+  TAHAP_ORDER,
   type SchoolYear,
   type Subject,
+  type Tahap,
 } from '../data/curriculum'
 import { lessonsForYear, lessonsInYear } from '../data/lessons'
 import { clearedLevelCount, isLessonComplete, levelForXp, levelKey } from '../games/engine'
@@ -25,19 +27,41 @@ function yearProgress(year: SchoolYear, completedLevels: string[]) {
   return { cleared, total }
 }
 
+/** Cleared levels out of all levels across every year in a tahap. */
+function tahapProgress(tahap: Tahap, completedLevels: string[]) {
+  return TAHAP[tahap].years.reduce(
+    (acc, y) => {
+      const { cleared, total } = yearProgress(y, completedLevels)
+      return { cleared: acc.cleared + cleared, total: acc.total + total }
+    },
+    { cleared: 0, total: 0 },
+  )
+}
+
 export default function Path() {
   const { progress } = useProgress()
   const access = useAccess()
-  // The school year is the only grouping: Tahun 1 and Tahun 2 are never
-  // mixed in one list.
+  // Tahap is the top-level group; the school year is chosen inside it, so
+  // Tahun 1 and Tahun 2 are never mixed in one list.
+  const [tahap, setTahap] = useState<Tahap>('tahap1')
   const [year, setYear] = useState<SchoolYear>('tahun1')
   const [subject, setSubject] = useState<Subject>('bm')
   // While access is loading, do not flash locks at a paying parent.
   const onTrial = access.status === 'trial' || access.status === 'anonymous'
 
+  const tahapMeta = TAHAP[tahap]
   const yearMeta = SCHOOL_YEARS[year]
   const lessons = lessonsForYear(year, subject)
   const { level, intoLevel, needed } = levelForXp(progress.xp)
+
+  function pickTahap(next: Tahap) {
+    setTahap(next)
+    // Jump to the first year in the group so the list is never empty.
+    const firstYear = TAHAP[next].years[0]
+    setYear(firstYear)
+    const subjects = SCHOOL_YEARS[firstYear].subjects
+    if (!subjects.includes(subject)) setSubject(subjects[0])
+  }
 
   function pickYear(next: SchoolYear) {
     setYear(next)
@@ -95,10 +119,47 @@ export default function Path() {
 
         <section className="mb-5">
           <h2 className="mb-2 text-sm font-extrabold uppercase tracking-wide text-ink-300">
+            Tahap
+          </h2>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {TAHAP_ORDER.map((id) => {
+              const { cleared, total } = tahapProgress(id, progress.completedLevels)
+              const done = total > 0 && cleared === total
+              return (
+                <button
+                  key={id}
+                  onClick={() => pickTahap(id)}
+                  className={`shrink-0 rounded-full px-4 py-2 text-sm font-extrabold transition-colors ${
+                    tahap === id
+                      ? 'bg-brand-600 text-white'
+                      : 'bg-white text-ink-500 hover:bg-cream-100'
+                  }`}
+                >
+                  {TAHAP[id].label}
+                  <span
+                    className={`ml-2 rounded-full px-1.5 py-0.5 text-xs ${
+                      tahap === id
+                        ? 'bg-white/20 text-white'
+                        : done
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-cream-100 text-ink-300'
+                    }`}
+                  >
+                    {done ? '✓' : `${cleared}/${total}`}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+          <p className="mt-2 text-xs font-semibold text-ink-300">{tahapMeta.framework}</p>
+        </section>
+
+        <section className="mb-5">
+          <h2 className="mb-2 text-sm font-extrabold uppercase tracking-wide text-ink-300">
             Tahun
           </h2>
           <div className="flex gap-2 overflow-x-auto pb-1">
-            {SCHOOL_YEAR_ORDER.map((id) => {
+            {tahapMeta.years.map((id) => {
               const { cleared, total } = yearProgress(id, progress.completedLevels)
               const done = total > 0 && cleared === total
               return (

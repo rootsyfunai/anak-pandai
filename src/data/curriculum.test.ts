@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { SCHOOL_YEARS, SCHOOL_YEAR_ORDER, schoolYearForBirthYear } from './curriculum'
+import {
+  SCHOOL_YEARS,
+  SCHOOL_YEAR_ORDER,
+  TAHAP,
+  TAHAP_ORDER,
+  schoolYearForBirthYear,
+  tahapForYear,
+} from './curriculum'
 import { LESSONS, lessonsForYear } from './lessons'
 
 describe('schoolYearForBirthYear', () => {
@@ -23,6 +30,26 @@ describe('schoolYearForBirthYear', () => {
 
   it('never returns a year above Tahun 6', () => {
     expect(schoolYearForBirthYear(2000, now)).toBe('tahun6')
+  })
+})
+
+describe('tahap grouping', () => {
+  it('groups every school year under exactly one tahap', () => {
+    for (const year of SCHOOL_YEAR_ORDER) {
+      const owners = TAHAP_ORDER.filter((t) => TAHAP[t].years.includes(year))
+      expect(owners).toHaveLength(1)
+      expect(tahapForYear(year)).toBe(owners[0])
+    }
+  })
+
+  it('keeps Tahun 1-3 in Tahap 1 and Tahun 4-6 in Tahap 2', () => {
+    expect(TAHAP.tahap1.years).toEqual(['tahun1', 'tahun2', 'tahun3'])
+    expect(TAHAP.tahap2.years).toEqual(['tahun4', 'tahun5', 'tahun6'])
+  })
+
+  it('covers every year across the tahap groups', () => {
+    const grouped = TAHAP_ORDER.flatMap((t) => TAHAP[t].years)
+    expect([...grouped].sort()).toEqual([...SCHOOL_YEAR_ORDER].sort())
   })
 })
 
