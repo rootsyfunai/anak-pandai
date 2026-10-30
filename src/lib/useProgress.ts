@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { levelKey, nextStreak, toDateKey } from '../games/engine'
+import { lessonById } from '../data/lessons'
+import { isSupabaseConfigured, loadSupabase } from './supabase'
 
 const KEY = 'ap_progress'
 
@@ -44,8 +46,49 @@ function load(): Progress {
 }
 
 /**
- * Local progress store. Keeps the app usable before Supabase is wired up;
- * the same shape is written to `game_results` once auth is in place.
+ * Record a cleared level in `game_results` so a parent can see it on another
+ * device. Best-effort: the local store is the source of truth for gameplay,
+ * and a signed-out or offline child must never be blocked by a failed write.
+ */
+async function syncResult(lessonId: string, levelIndex: number, xpEarned: number) {
+  if (!isSupabaseConfigured) return
+  const lesson = lessonById(lessonId)
+  if (!lesson) return
+
+  try {
+    const supabase = await loadSupabase()
+    const { data: auth } = await supabase.auth.getUser()
+    const userId = auth.user?.id
+    if (!userId) return
+
+    // A child profile is required by the schema; use the first one.
+    const { data: children } = await supabase
+      .from('children')
+      .select('id')
+      .eq('parent_id', userId)
+      .limit(1)
+    const childId = children?.[0]?.id
+    if (!childId) return
+
+    const level = lesson.levels.find((l) => l.index === levelIndex)
+    await supabase.from('game_results').insert({
+      child_id: childId,
+      game_id: `${lessonId}:${levelIndex}`,
+      subject: lesson.subject,
+      age_band: lesson.year,
+      score: level?.questions.length ?? 0,
+      total: level?.questions.length ?? 0,
+      xp_earned: xpEarned,
+    })
+  } catch {
+    // Offline or unauthenticated: the local store already has the progress.
+  }
+}
+
+/**
+ * Progress store. localStorage is the source of truth so the app works
+ * offline and before sign-in; cleared levels are also mirrored to
+ * `game_results` when Supabase is configured.
  */
 export function useProgress() {
   const [progress, setProgress] = useState<Progress>(load)
@@ -71,6 +114,7 @@ export function useProgress() {
         completedLevels: alreadyDone ? prev.completedLevels : [...prev.completedLevels, key],
       }
     })
+    void syncResult(lessonId, levelIndex, xpEarned)
   }, [])
 
   const reset = useCallback(() => setProgress(EMPTY), [])

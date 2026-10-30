@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Button } from '../components/Button'
 import { CdnImage } from '../components/CdnImage'
 import { Logo } from '../components/Logo'
-import { AGE_BANDS, AGE_BAND_ORDER, SUBJECTS } from '../data/curriculum'
+import { SCHOOL_YEARS, SCHOOL_YEAR_ORDER, SUBJECTS } from '../data/curriculum'
 import { LESSONS } from '../data/lessons'
 import { COMMISSION_MYR, PRICE_MYR, formatMYR } from '../lib/config'
 import { getStoredRef, type CapturedRef } from '../lib/affiliate'
@@ -161,17 +161,17 @@ export default function Landing() {
 
       <section className="mx-auto max-w-5xl px-4 pb-16">
         <h2 className="text-center text-2xl font-black text-ink-900">
-          Satu app, empat peringkat umur
+          Satu app, setiap tahun persekolahan
         </h2>
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {AGE_BAND_ORDER.map((bandId) => {
-            const band = AGE_BANDS[bandId]
+          {SCHOOL_YEAR_ORDER.map((yearId) => {
+            const year = SCHOOL_YEARS[yearId]
             return (
-              <div key={bandId} className="card-3d">
-                <p className="text-lg font-black text-brand-700">{band.label}</p>
-                <p className="mt-1 text-sm font-semibold text-ink-300">{band.framework}</p>
+              <div key={yearId} className="card-3d">
+                <p className="text-lg font-black text-brand-700">{year.label}</p>
+                <p className="mt-1 text-sm font-semibold text-ink-300">{year.framework}</p>
                 <ul className="mt-3 space-y-1">
-                  {band.subjects.slice(0, 4).map((s) => (
+                  {year.subjects.slice(0, 4).map((s) => (
                     <li key={s} className="text-sm text-ink-500">
                       {SUBJECTS[s].emoji} {SUBJECTS[s].name}
                     </li>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+﻿import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Button } from '../components/Button'
 import { Hearts, ProgressBar } from '../components/Hud'
@@ -10,15 +10,18 @@ import {
   StoryBoard,
   TraceBoard,
 } from '../components/QuestionBoards'
-import { AGE_BANDS, type AgeBand } from '../data/curriculum'
+import { SCHOOL_YEARS } from '../data/curriculum'
 import { lessonById, type Question } from '../data/lessons'
 import {
   accuracy,
   advance,
   answer,
   currentQuestion,
+  isLevelUnlocked,
   levelOf,
   MAX_HEARTS,
+  PASS_ACCURACY,
+  passed,
   stars,
   startSession,
   type SessionState,
@@ -30,14 +33,19 @@ export default function Play() {
   const { lessonId = '', levelIndex = '1' } = useParams()
   const navigate = useNavigate()
   const lesson = lessonById(lessonId)
-  const { completeLevel } = useProgress()
+  const { progress, completeLevel } = useProgress()
 
   const requestedLevel = Number.parseInt(levelIndex, 10) || 1
-  const band: AgeBand = lesson?.band ?? '4-6'
-  const bandMeta = AGE_BANDS[band]
+  const yearMeta = SCHOOL_YEARS[lesson?.year ?? 'tahun1']
+
+  // A level only opens once the one before it is cleared. Without this a
+  // child could skip ahead just by editing the URL.
+  const unlocked = lesson
+    ? isLevelUnlocked(lesson, requestedLevel, progress.completedLevels)
+    : false
 
   const [state, setState] = useState<SessionState | null>(() =>
-    lesson ? startSession(lesson, lesson.band, requestedLevel) : null,
+    lesson ? startSession(lesson, requestedLevel) : null,
   )
   const [selected, setSelected] = useState<string | null>(null)
   const [shake, setShake] = useState(false)
@@ -47,7 +55,7 @@ export default function Play() {
   const [activeKey, setActiveKey] = useState(sessionKey)
   if (lesson && sessionKey !== activeKey) {
     setActiveKey(sessionKey)
-    setState(startSession(lesson, lesson.band, requestedLevel))
+    setState(startSession(lesson, requestedLevel))
     setSelected(null)
   }
 
@@ -62,8 +70,8 @@ export default function Play() {
   useEffect(() => {
     if (!question) return
     const text = question.audioText ?? question.prompt
-    if (bandMeta.isBabyMode || question.kind === 'listen') speak(text)
-  }, [question, bandMeta.isBabyMode])
+    if (yearMeta.isBabyMode || question.kind === 'listen') speak(text)
+  }, [question, yearMeta.isBabyMode])
 
   const handleAnswer = useCallback(
     (value: string) => {
@@ -88,7 +96,7 @@ export default function Play() {
         setShake(true)
         setTimeout(() => setShake(false), 400)
       }
-      setState(answer(state, correct, lesson.band))
+      setState(answer(state, correct))
     },
     [lesson, state, question],
   )
@@ -97,7 +105,7 @@ export default function Play() {
     if (!lesson || !state) return
     setSelected(null)
     const next = advance(lesson, state)
-    if (next.finished && !next.failed) {
+    if (passed(next)) {
       completeLevel(lesson.id, state.levelIndex, next.xp)
     }
     setState(next)
@@ -107,6 +115,21 @@ export default function Play() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-6">
         <p className="text-xl font-bold">Pelajaran tidak dijumpai.</p>
+        <Link to="/main">
+          <Button>Kembali</Button>
+        </Link>
+      </div>
+    )
+  }
+
+  if (!unlocked) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center">
+        <span className="text-6xl">🔒</span>
+        <p className="text-xl font-black text-ink-900">Tahap ini masih berkunci</p>
+        <p className="max-w-sm font-bold text-ink-300">
+          Selesaikan Tahap {requestedLevel - 1} dahulu untuk membuka tahap ini.
+        </p>
         <Link to="/main">
           <Button>Kembali</Button>
         </Link>
@@ -125,6 +148,10 @@ export default function Play() {
         levelTitle={level.title}
         state={state}
         onDone={() => navigate('/main')}
+        onRetry={() => {
+          setState(startSession(lesson, requestedLevel))
+          setSelected(null)
+        }}
       />
     )
   }
@@ -140,7 +167,7 @@ export default function Play() {
         <div className="flex-1">
           <ProgressBar value={state.index} max={level.questions.length} />
         </div>
-        {bandMeta.hasHearts && <Hearts hearts={state.hearts} />}
+        {yearMeta.hasHearts && <Hearts hearts={state.hearts} />}
       </header>
 
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 pb-40">
@@ -357,21 +384,29 @@ function Summary({
   levelTitle,
   state,
   onDone,
+  onRetry,
 }: {
   lessonTitle: string
   levelTitle: string
   state: SessionState
   onDone: () => void
+  onRetry: () => void
 }) {
   const earned = stars(state)
   const acc = accuracy(state)
+  const cleared = passed(state)
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-gradient-to-b from-amber-50 to-white p-6 text-center">
-      <span className="animate-pop text-7xl">{state.failed ? '💪' : '🎉'}</span>
+      <span className="animate-pop text-7xl">{cleared ? '🎉' : '💪'}</span>
       <h1 className="text-3xl font-black text-ink-900">
-        {state.failed ? 'Cuba lagi!' : 'Syabas!'}
+        {cleared ? 'Syabas!' : 'Cuba lagi!'}
       </h1>
+      {!cleared && (
+        <p className="max-w-sm font-bold text-ink-300">
+          Dapat sekurang-kurangnya {PASS_ACCURACY}% betul untuk membuka tahap seterusnya.
+        </p>
+      )}
       <p className="font-bold text-ink-300">
         {lessonTitle} · Tahap {state.levelIndex}: {levelTitle}
       </p>
@@ -385,14 +420,26 @@ function Summary({
       </div>
 
       <div className="grid w-full max-w-sm grid-cols-3 gap-3">
-        <Stat label="XP" value={state.xp} />
+        {/* XP is only banked on a pass, so show what was actually earned. */}
+        <Stat label="XP" value={cleared ? state.xp : 0} />
         <Stat label="Ketepatan" value={`${acc}%`} />
         <Stat label="Betul" value={`${state.correct}/${state.answered}`} />
       </div>
 
-      <Button onClick={onDone} className="px-10 py-4 text-lg">
-        Selesai
-      </Button>
+      <div className="flex flex-wrap items-center justify-center gap-3">
+        {!cleared && (
+          <Button variant="primary" onClick={onRetry} className="px-10 py-4 text-lg">
+            Cuba lagi
+          </Button>
+        )}
+        <Button
+          variant={cleared ? 'primary' : 'neutral'}
+          onClick={onDone}
+          className="px-10 py-4 text-lg"
+        >
+          Selesai
+        </Button>
+      </div>
     </div>
   )
 }

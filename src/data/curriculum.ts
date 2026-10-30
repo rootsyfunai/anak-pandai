@@ -1,14 +1,24 @@
 /**
  * Curriculum model for Anak Pandai.
  *
- * Age bands follow the Malaysian national curriculum:
- *  - 1-3   : pre-formal. No KPM framework exists; developmental play only.
- *  - 4-6   : KSPK (Kurikulum Standard Prasekolah Kebangsaan), 6 tunjang.
- *  - 7-9   : KSSR Tahap 1 (Tahun 1-3).
- *  - 10-12 : KSSR Tahap 2 (Tahun 4-6), adds Sejarah.
+ * Content is organised by school year, following the Malaysian national
+ * curriculum:
+ *  - prasekolah : KSPK (Kurikulum Standard Prasekolah Kebangsaan), 6 tunjang.
+ *  - tahun1-3   : KSSR Tahap 1.
+ *  - tahun4-6   : KSSR Tahap 2, adds Sejarah.
+ *  - baby       : pre-formal play for ages 1-3. No KPM framework exists at
+ *                 this age, so it is not a school year.
  */
 
-export type AgeBand = '1-3' | '4-6' | '7-9' | '10-12'
+export type SchoolYear =
+  | 'baby'
+  | 'prasekolah'
+  | 'tahun1'
+  | 'tahun2'
+  | 'tahun3'
+  | 'tahun4'
+  | 'tahun5'
+  | 'tahun6'
 
 export type Subject =
   | 'bm'
@@ -41,11 +51,11 @@ export const SUBJECTS: Record<Subject, SubjectMeta> = {
   diri: { id: 'diri', name: 'Diri & Keluarga', nameEn: 'Self & Family', emoji: '👨‍👩‍👧', color: '#06b6d4' },
 }
 
-export interface AgeBandMeta {
-  id: AgeBand
+export interface SchoolYearMeta {
+  id: SchoolYear
   label: string
   framework: string
-  /** Baby band has no reading, no hearts, no streaks. */
+  /** Baby mode has no reading, no hearts, no streaks. */
   isBabyMode: boolean
   /** Hearts + streak pressure only for reading-age kids. */
   hasHearts: boolean
@@ -53,9 +63,9 @@ export interface AgeBandMeta {
   subjects: Subject[]
 }
 
-export const AGE_BANDS: Record<AgeBand, AgeBandMeta> = {
-  '1-3': {
-    id: '1-3',
+export const SCHOOL_YEARS: Record<SchoolYear, SchoolYearMeta> = {
+  baby: {
+    id: 'baby',
     label: '1-3 tahun',
     framework: 'Pembelajaran awal (bukan formal)',
     isBabyMode: true,
@@ -63,28 +73,64 @@ export const AGE_BANDS: Record<AgeBand, AgeBandMeta> = {
     hasStreaks: false,
     subjects: ['diri', 'seni', 'math'],
   },
-  '4-6': {
-    id: '4-6',
-    label: '4-6 tahun',
+  prasekolah: {
+    id: 'prasekolah',
+    label: 'Prasekolah',
     framework: 'KSPK Prasekolah',
     isBabyMode: false,
     hasHearts: false,
     hasStreaks: true,
     subjects: ['bm', 'english', 'math', 'science', 'islam', 'moral', 'diri', 'seni'],
   },
-  '7-9': {
-    id: '7-9',
-    label: '7-9 tahun',
-    framework: 'KSSR Tahap 1 (Tahun 1-3)',
+  tahun1: {
+    id: 'tahun1',
+    label: 'Tahun 1',
+    framework: 'KSSR Tahap 1',
     isBabyMode: false,
     hasHearts: true,
     hasStreaks: true,
     subjects: ['bm', 'english', 'math', 'science', 'islam', 'moral'],
   },
-  '10-12': {
-    id: '10-12',
-    label: '10-12 tahun',
-    framework: 'KSSR Tahap 2 (Tahun 4-6)',
+  tahun2: {
+    id: 'tahun2',
+    label: 'Tahun 2',
+    framework: 'KSSR Tahap 1',
+    isBabyMode: false,
+    hasHearts: true,
+    hasStreaks: true,
+    subjects: ['bm', 'english', 'math', 'science', 'islam', 'moral'],
+  },
+  tahun3: {
+    id: 'tahun3',
+    label: 'Tahun 3',
+    framework: 'KSSR Tahap 1',
+    isBabyMode: false,
+    hasHearts: true,
+    hasStreaks: true,
+    subjects: ['bm', 'english', 'math', 'science', 'islam', 'moral'],
+  },
+  tahun4: {
+    id: 'tahun4',
+    label: 'Tahun 4',
+    framework: 'KSSR Tahap 2',
+    isBabyMode: false,
+    hasHearts: true,
+    hasStreaks: true,
+    subjects: ['bm', 'english', 'math', 'science', 'sejarah', 'islam', 'moral'],
+  },
+  tahun5: {
+    id: 'tahun5',
+    label: 'Tahun 5',
+    framework: 'KSSR Tahap 2',
+    isBabyMode: false,
+    hasHearts: true,
+    hasStreaks: true,
+    subjects: ['bm', 'english', 'math', 'science', 'sejarah', 'islam', 'moral'],
+  },
+  tahun6: {
+    id: 'tahun6',
+    label: 'Tahun 6',
+    framework: 'KSSR Tahap 2',
     isBabyMode: false,
     hasHearts: true,
     hasStreaks: true,
@@ -92,13 +138,23 @@ export const AGE_BANDS: Record<AgeBand, AgeBandMeta> = {
   },
 }
 
-export const AGE_BAND_ORDER: AgeBand[] = ['1-3', '4-6', '7-9', '10-12']
+/** Every school year, in school order. */
+export const SCHOOL_YEAR_ORDER: SchoolYear[] = [
+  'baby',
+  'prasekolah',
+  'tahun1',
+  'tahun2',
+  'tahun3',
+  'tahun4',
+  'tahun5',
+  'tahun6',
+]
 
-/** Derive the band from a birth year, using the current calendar year. */
-export function ageBandForBirthYear(birthYear: number, now = new Date()): AgeBand {
+/** Derive the school year from a birth year, using the current calendar year. */
+export function schoolYearForBirthYear(birthYear: number, now = new Date()): SchoolYear {
   const age = now.getFullYear() - birthYear
-  if (age <= 3) return '1-3'
-  if (age <= 6) return '4-6'
-  if (age <= 9) return '7-9'
-  return '10-12'
+  if (age <= 3) return 'baby'
+  if (age <= 6) return 'prasekolah'
+  if (age <= 9) return `tahun${age - 6}` as SchoolYear
+  return `tahun${Math.min(6, age - 6)}` as SchoolYear
 }

@@ -187,12 +187,17 @@ export function TraceBoard({
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const drawing = useRef(false)
-  const [coverage, setCoverage] = useState(0)
+  const lastPoint = useRef<{ x: number; y: number } | null>(null)
+  const [coveredPoints, setCoveredPoints] = useState<Set<number>>(() => new Set())
   const [done, setDone] = useState(false)
 
   // Guide points, sampled from the rendered glyph. Recomputed only when the
   // glyph changes, since measuring text is not free.
   const guidePoints = useMemo(() => sampleGlyph(question.glyph), [question.glyph])
+
+  const coverage = guidePoints.length
+    ? coveredPoints.size / guidePoints.length
+    : 0
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -235,12 +240,32 @@ export function TraceBoard({
     ctx.beginPath()
     ctx.moveTo(p.x, p.y)
 
+    // Pointer events are sparse, so a fast stroke jumps a long way between
+    // samples. Score the whole segment from the previous point, otherwise
+    // most of the glyph is never counted and the child can never reach the
+    // pass threshold.
     const size = canvas.clientWidth
-    const hit = guidePoints.filter(
-      (g) => Math.hypot(g.x * size - p.x, g.y * size - p.y) < size * 0.09,
-    ).length
-    const next = Math.min(1, hit / Math.max(1, guidePoints.length))
-    setCoverage((c) => Math.max(c, next))
+    const from = lastPoint.current ?? p
+    lastPoint.current = p
+    const steps = Math.max(1, Math.ceil(Math.hypot(p.x - from.x, p.y - from.y) / 4))
+    const radius = size * 0.09
+
+    const covered = new Set<number>()
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps
+      const x = from.x + (p.x - from.x) * t
+      const y = from.y + (p.y - from.y) * t
+      guidePoints.forEach((g, idx) => {
+        if (Math.hypot(g.x * size - x, g.y * size - y) < radius) covered.add(idx)
+      })
+    }
+    if (covered.size === 0) return
+
+    setCoveredPoints((prev) => {
+      const next = new Set(prev)
+      covered.forEach((i) => next.add(i))
+      return next
+    })
   }
 
   function start(e: React.PointerEvent<HTMLCanvasElement>) {
@@ -249,6 +274,7 @@ export function TraceBoard({
     const ctx = canvas?.getContext('2d')
     if (!ctx) return
     const p = pointFrom(e)
+    lastPoint.current = p
     ctx.beginPath()
     ctx.moveTo(p.x, p.y)
   }
@@ -273,7 +299,8 @@ export function TraceBoard({
     ctx.textBaseline = 'middle'
     ctx.fillStyle = '#f2e9e0'
     ctx.fillText(question.glyph, size / 2, size / 2)
-    setCoverage(0)
+    setCoveredPoints(new Set())
+    lastPoint.current = null
   }
 
   return (

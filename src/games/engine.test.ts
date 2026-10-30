@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+﻿import { describe, expect, it } from 'vitest'
 import {
   accuracy,
   advance,
@@ -11,64 +11,70 @@ import {
   levelOf,
   MAX_HEARTS,
   nextStreak,
+  passed,
   stars,
   startSession,
+  type SessionState,
   toDateKey,
   xpMultiplierForLevel,
 } from './engine'
 import { lessonById } from '../data/lessons'
 
-const lesson = lessonById('kspk-nombor-10')!
+// A Tahun 1 lesson: reading age, so hearts apply.
+const lesson = lessonById('t1-math-100')!
 const level1 = levelOf(lesson, 1)!
 
 describe('session flow', () => {
   it('starts with full hearts and no progress', () => {
-    const s = startSession(lesson, '4-6')
+    const s = startSession(lesson)
     expect(s.hearts).toBe(MAX_HEARTS)
     expect(s.index).toBe(0)
     expect(s.xp).toBe(0)
     expect(s.finished).toBe(false)
     expect(s.levelIndex).toBe(1)
+    expect(s.year).toBe(lesson.year)
   })
 
   it('awards XP for a correct answer', () => {
-    const s = answer(startSession(lesson, '7-9'), true, '7-9')
+    const s = answer(startSession(lesson), true)
     expect(s.correct).toBe(1)
     expect(s.xp).toBe(10)
     expect(s.hearts).toBe(MAX_HEARTS)
   })
 
-  it('removes a heart for a wrong answer in the 7-9 band', () => {
-    const s = answer(startSession(lesson, '7-9'), false, '7-9')
+  it('removes a heart for a wrong answer in a reading year', () => {
+    const s = answer(startSession(lesson), false)
     expect(s.hearts).toBe(MAX_HEARTS - 1)
     expect(s.correct).toBe(0)
   })
 
   it('never removes hearts in baby mode', () => {
-    let s = startSession(lesson, '1-3')
-    for (let i = 0; i < 5; i++) s = answer(s, false, '1-3')
+    const baby = lessonById('baby-animals')!
+    let s = startSession(baby)
+    for (let i = 0; i < 5; i++) s = answer(s, false)
     expect(s.hearts).toBe(MAX_HEARTS)
     expect(s.failed).toBe(false)
   })
 
-  it('never removes hearts in the 4-6 band', () => {
-    let s = startSession(lesson, '4-6')
-    for (let i = 0; i < 5; i++) s = answer(s, false, '4-6')
+  it('never removes hearts in Prasekolah', () => {
+    const prasekolah = lessonById('kspk-vokal')!
+    let s = startSession(prasekolah)
+    for (let i = 0; i < 5; i++) s = answer(s, false)
     expect(s.hearts).toBe(MAX_HEARTS)
   })
 
   it('fails the lesson when hearts run out', () => {
-    let s = startSession(lesson, '7-9')
-    for (let i = 0; i < MAX_HEARTS; i++) s = answer(s, false, '7-9')
+    let s = startSession(lesson)
+    for (let i = 0; i < MAX_HEARTS; i++) s = answer(s, false)
     expect(s.failed).toBe(true)
     expect(s.finished).toBe(true)
   })
 
   it('advances through questions and finishes with a bonus', () => {
-    let s = startSession(lesson, '7-9')
+    let s = startSession(lesson)
     const total = level1.questions.length
     for (let i = 0; i < total; i++) {
-      s = answer(s, true, '7-9')
+      s = answer(s, true)
       s = advance(lesson, s)
     }
     expect(s.finished).toBe(true)
@@ -84,8 +90,8 @@ describe('level progression', () => {
   })
 
   it('awards more XP for a later level', () => {
-    const l1 = answer(startSession(lesson, '7-9', 1), true, '7-9')
-    const l3 = answer(startSession(lesson, '7-9', 3), true, '7-9')
+    const l1 = answer(startSession(lesson, 1), true)
+    const l3 = answer(startSession(lesson, 3), true)
     expect(l3.xp).toBeGreaterThan(l1.xp)
   })
 
@@ -116,22 +122,64 @@ describe('level progression', () => {
 
 describe('scoring', () => {
   it('computes accuracy', () => {
-    let s = startSession(lesson, '7-9')
-    s = answer(s, true, '7-9')
-    s = answer(s, false, '7-9')
+    let s = startSession(lesson)
+    s = answer(s, true)
+    s = answer(s, false)
     expect(accuracy(s)).toBe(50)
   })
 
   it('awards three stars for high accuracy', () => {
-    let s = startSession(lesson, '7-9')
-    for (let i = 0; i < 10; i++) s = answer(s, true, '7-9')
+    let s = startSession(lesson)
+    for (let i = 0; i < 10; i++) s = answer(s, true)
     expect(stars(s)).toBe(3)
   })
 
   it('awards no stars when the lesson is failed', () => {
-    let s = startSession(lesson, '7-9')
-    for (let i = 0; i < MAX_HEARTS; i++) s = answer(s, false, '7-9')
+    let s = startSession(lesson)
+    for (let i = 0; i < MAX_HEARTS; i++) s = answer(s, false)
     expect(stars(s)).toBe(0)
+  })
+
+  /**
+   * Answer every question in the level. `results` is padded with wrong
+   * answers so a short list still plays the level to the end.
+   */
+  function playLevel(results: boolean[]) {
+    let s = startSession(lesson)
+    const total = level1.questions.length
+    for (let i = 0; i < total; i++) {
+      s = answer(s, results[i] ?? false)
+      s = advance(lesson, s)
+    }
+    return s
+  }
+
+  it('awards no stars when every answer is wrong but hearts remain', () => {
+    // A level with fewer questions than hearts can never run out of hearts,
+    // so finishing it must not be treated as a pass.
+    const s = playLevel([false, false, false])
+    expect(s.finished).toBe(true)
+    expect(s.failed).toBe(false)
+    expect(stars(s)).toBe(0)
+    expect(passed(s)).toBe(false)
+  })
+
+  it('passes a level at the accuracy threshold', () => {
+    // No shipped level has exactly two questions, so build the state directly.
+    const s: SessionState = {
+      ...startSession(lesson),
+      finished: true,
+      answered: 2,
+      correct: 1,
+    }
+    expect(accuracy(s)).toBe(50)
+    expect(passed(s)).toBe(true)
+  })
+
+  it('does not pass a level below the accuracy threshold', () => {
+    const s = playLevel([true, false, false])
+    expect(accuracy(s)).toBe(33)
+    expect(passed(s)).toBe(false)
   })
 })
 

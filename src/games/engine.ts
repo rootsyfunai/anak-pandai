@@ -1,4 +1,4 @@
-import type { AgeBand } from '../data/curriculum'
+import { SCHOOL_YEARS, type SchoolYear } from '../data/curriculum'
 import type { Lesson, Level, Question } from '../data/lessons'
 
 export const MAX_HEARTS = 5
@@ -14,7 +14,7 @@ export interface SessionState {
   lessonId: string
   /** 1-based level index within the lesson. */
   levelIndex: number
-  band: AgeBand
+  year: SchoolYear
   index: number
   hearts: number
   xp: number
@@ -27,11 +27,11 @@ export interface SessionState {
   failed: boolean
 }
 
-export function startSession(lesson: Lesson, band: AgeBand, levelIndex = 1): SessionState {
+export function startSession(lesson: Lesson, levelIndex = 1): SessionState {
   return {
     lessonId: lesson.id,
     levelIndex,
-    band,
+    year: lesson.year,
     index: 0,
     hearts: MAX_HEARTS,
     xp: 0,
@@ -58,8 +58,8 @@ export function currentQuestion(lesson: Lesson, state: SessionState): Question |
  * Record an answer. Baby mode never loses hearts and never fails — the
  * child simply retries, which keeps the experience encouraging for 1-3.
  */
-export function answer(state: SessionState, isCorrect: boolean, band: AgeBand): SessionState {
-  const hasHearts = band !== '1-3' && band !== '4-6'
+export function answer(state: SessionState, isCorrect: boolean): SessionState {
+  const hasHearts = SCHOOL_YEARS[state.year].hasHearts
   const next: SessionState = {
     ...state,
     answered: state.answered + 1,
@@ -106,7 +106,14 @@ export function accuracy(state: SessionState): number {
   return Math.round((state.correct / state.answered) * 100)
 }
 
-/** Stars awarded for the lesson summary: 0-3. */
+/**
+ * Stars awarded for the lesson summary: 0-3.
+ *
+ * A level only counts as cleared when the child actually got most of it
+ * right. Without the accuracy floor a short level could be finished with
+ * every answer wrong — it never runs out of hearts — and still be marked
+ * complete, which would unlock the next level on a failed attempt.
+ */
 export function stars(state: SessionState): number {
   if (state.failed) return 0
   const acc = accuracy(state)
@@ -114,6 +121,14 @@ export function stars(state: SessionState): number {
   if (acc >= 70) return 2
   if (acc >= 50) return 1
   return 0
+}
+
+/** Minimum accuracy needed to clear a level and unlock the next one. */
+export const PASS_ACCURACY = 50
+
+/** True when the child finished the level well enough to move on. */
+export function passed(state: SessionState): boolean {
+  return state.finished && !state.failed && accuracy(state) >= PASS_ACCURACY
 }
 
 /**

@@ -1,25 +1,41 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '../components/Button'
 import { Logo } from '../components/Logo'
 import { StreakBadge, XpBadge } from '../components/Hud'
-import { AGE_BANDS, AGE_BAND_ORDER, SUBJECTS, type AgeBand, type Subject } from '../data/curriculum'
-import { lessonsFor } from '../data/lessons'
+import {
+  SCHOOL_YEARS,
+  SCHOOL_YEAR_ORDER,
+  SUBJECTS,
+  type SchoolYear,
+  type Subject,
+} from '../data/curriculum'
+import { lessonsForYear, lessonsInYear } from '../data/lessons'
 import { clearedLevelCount, isLessonComplete, levelForXp, levelKey } from '../games/engine'
 import { useProgress } from '../lib/useProgress'
 
+/** Cleared levels out of all levels for one school year. */
+function yearProgress(year: SchoolYear, completedLevels: string[]) {
+  const lessons = lessonsInYear(year)
+  const total = lessons.reduce((n, l) => n + l.levels.length, 0)
+  const cleared = lessons.reduce((n, l) => n + clearedLevelCount(l, completedLevels), 0)
+  return { cleared, total }
+}
+
 export default function Path() {
   const { progress } = useProgress()
-  const [band, setBand] = useState<AgeBand>('4-6')
+  // The school year is the only grouping: Tahun 1 and Tahun 2 are never
+  // mixed in one list.
+  const [year, setYear] = useState<SchoolYear>('tahun1')
   const [subject, setSubject] = useState<Subject>('bm')
 
-  const bandMeta = AGE_BANDS[band]
-  const lessons = lessonsFor(band, subject)
+  const yearMeta = SCHOOL_YEARS[year]
+  const lessons = lessonsForYear(year, subject)
   const { level, intoLevel, needed } = levelForXp(progress.xp)
 
-  function pickBand(next: AgeBand) {
-    setBand(next)
-    const subjects = AGE_BANDS[next].subjects
+  function pickYear(next: SchoolYear) {
+    setYear(next)
+    const subjects = SCHOOL_YEARS[next].subjects
     if (!subjects.includes(subject)) setSubject(subjects[0])
   }
 
@@ -29,7 +45,7 @@ export default function Path() {
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
           <Logo to="/main" />
           <div className="flex items-center gap-2">
-            {bandMeta.hasStreaks && <StreakBadge days={progress.streakDays} />}
+            {yearMeta.hasStreaks && <StreakBadge days={progress.streakDays} />}
             <XpBadge xp={progress.xp} />
           </div>
         </div>
@@ -58,24 +74,41 @@ export default function Path() {
 
         <section className="mb-5">
           <h2 className="mb-2 text-sm font-extrabold uppercase tracking-wide text-ink-300">
-            Peringkat umur
+            Tahun
           </h2>
           <div className="flex gap-2 overflow-x-auto pb-1">
-            {AGE_BAND_ORDER.map((id) => (
-              <button
-                key={id}
-                onClick={() => pickBand(id)}
-                className={`shrink-0 rounded-full px-4 py-2 text-sm font-extrabold transition-colors ${
-                  band === id
-                    ? 'bg-brand-600 text-white'
-                    : 'bg-white text-ink-500 hover:bg-cream-100'
-                }`}
-              >
-                {AGE_BANDS[id].label}
-              </button>
-            ))}
+            {SCHOOL_YEAR_ORDER.map((id) => {
+              const { cleared, total } = yearProgress(id, progress.completedLevels)
+              const done = total > 0 && cleared === total
+              return (
+                <button
+                  key={id}
+                  onClick={() => pickYear(id)}
+                  className={`shrink-0 rounded-full px-4 py-2 text-sm font-extrabold transition-colors ${
+                    year === id
+                      ? 'bg-ink-900 text-white'
+                      : 'bg-white text-ink-500 hover:bg-cream-100'
+                  }`}
+                >
+                  {SCHOOL_YEARS[id].label}
+                  <span
+                    className={`ml-2 rounded-full px-1.5 py-0.5 text-xs ${
+                      year === id
+                        ? 'bg-white/20 text-white'
+                        : done
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-cream-100 text-ink-300'
+                    }`}
+                  >
+                    {done ? '✓' : `${cleared}/${total}`}
+                  </span>
+                </button>
+              )
+            })}
           </div>
-          <p className="mt-2 text-xs font-semibold text-ink-300">{bandMeta.framework}</p>
+          <p className="mt-2 text-xs font-semibold text-ink-300">
+            {yearMeta.label} · {yearMeta.framework}
+          </p>
         </section>
 
         <section className="mb-6">
@@ -83,7 +116,7 @@ export default function Path() {
             Subjek
           </h2>
           <div className="flex flex-wrap gap-2">
-            {bandMeta.subjects.map((id) => (
+            {yearMeta.subjects.map((id) => (
               <button
                 key={id}
                 onClick={() => setSubject(id)}
@@ -105,7 +138,7 @@ export default function Path() {
           </h2>
           {lessons.length === 0 ? (
             <p className="card-3d text-center font-bold text-ink-300">
-              Kandungan untuk subjek ini sedang disediakan.
+              {yearMeta.label}: kandungan untuk subjek ini sedang disediakan.
             </p>
           ) : (
             <ol className="relative space-y-4 pl-6">
@@ -149,11 +182,10 @@ export default function Path() {
                                 levelKey(lesson.id, l.index),
                               )
                               const isNext = nextLevel?.index === l.index
-                              return (
+                              const open = !locked && (isCleared || isNext)
+                              const pip = (
                                 <span
-                                  key={l.index}
-                                  title={`Tahap ${l.index}: ${l.title}`}
-                                  className={`h-2.5 w-2.5 rounded-full ${
+                                  className={`block h-2.5 w-2.5 rounded-full ${
                                     isCleared
                                       ? 'bg-green-500'
                                       : isNext
@@ -161,6 +193,26 @@ export default function Path() {
                                         : 'bg-cream-200'
                                   }`}
                                 />
+                              )
+                              // Cleared levels stay replayable; locked ones are
+                              // not links at all.
+                              return open ? (
+                                <Link
+                                  key={l.index}
+                                  to={`/main/play/${lesson.id}/${l.index}`}
+                                  title={`Tahap ${l.index}: ${l.title}`}
+                                  className="p-1"
+                                >
+                                  {pip}
+                                </Link>
+                              ) : (
+                                <span
+                                  key={l.index}
+                                  title={`Tahap ${l.index}: ${l.title}`}
+                                  className="p-1"
+                                >
+                                  {pip}
+                                </span>
                               )
                             })}
                             <span className="ml-1 text-xs font-bold text-ink-300">
